@@ -1,0 +1,12 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral() // 전체 프로젝트에서 접근할 수 있도록 설정
+    }
+    plugins {
+        id 'org.springframework.boot' version "${springBootVersion}"
+        id 'io.spring.dependency-management' version "${springDependencyManagement}"
+    }
+}
+
+rootProject.name = 'iPho'

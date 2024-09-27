@@ -1,0 +1,45 @@
+plugins {
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "com.querydsl:querydsl-jpa:5.0.0:jakarta"
+    annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
+    annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+    annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+
+    // Test annotation processor 추가
+    testAnnotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
+}
+
+def generated = "${layout.buildDirectory.get()}/generated/sources/annotationProcessor/java"
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java', generated]
+        }
+    }
+    test {
+        java {
+            srcDirs = ['src/test/java', generated]
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.annotationProcessorGeneratedSourcesDirectory = file(generated)
+}
+
+tasks.named('compileTestJava') {
+    options.annotationProcessorGeneratedSourcesDirectory = file(generated)
+}
+
+tasks.register('cleanQuerydsl', Delete) {
+    delete file(generated)
+}

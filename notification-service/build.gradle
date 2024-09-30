@@ -1,0 +1,11 @@
+plugins {
+    id 'java'
+    id 'ipho.spring-conventions'
+    id 'ipho.java-conventions'
+    id 'org.springframework.boot'
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+}

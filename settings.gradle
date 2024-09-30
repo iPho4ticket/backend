@@ -11,4 +11,7 @@ pluginManagement {
 
 rootProject.name = 'iPho'
 
+
+
 include 'payment-service'
+include 'notification-service'

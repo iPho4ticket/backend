@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Profile;
 public class DataSourceConfig {
 
     @Bean
-    @ConfigurationProperties(prefix = "spring.datasource")
+    @ConfigurationProperties(prefix = "storage.datasource.core")
     public HikariConfig HikariConfig() {
         return new HikariConfig();
     }

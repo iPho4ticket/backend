@@ -29,6 +29,6 @@ storage:
       driver-class-name: org.h2.Driver
       jdbc-url: jdbc:h2:mem:core;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
       username: sa
-      pool-name: core-db-hub-pool
+      pool-name: db-payment-pool
       data-source-properties:
         rewriteBatchedStatements: true

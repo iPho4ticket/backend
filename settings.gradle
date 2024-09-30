@@ -10,3 +10,5 @@ pluginManagement {
 }
 
 rootProject.name = 'iPho'
+
+include 'notification-service'

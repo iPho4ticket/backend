@@ -4,12 +4,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Entity
@@ -17,10 +16,11 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@ToString
 public class Ticket {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID uuid;
 
     private Long userId;
@@ -41,6 +41,8 @@ public class Ticket {
         this.seatNumber = seatNumber;
         this.price = price;
         this.status = TicketStatus.PENDING;
+        this.reservationTime = Timestamp.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant());
+        // expirationTime 은 어떻게 설정할지?
     }
 
     public void cancel() {

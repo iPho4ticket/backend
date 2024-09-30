@@ -32,12 +32,12 @@ public class TicketService {
 
     @Transactional(readOnly = true)
     public TicketInfoDto searchTicketInfo(UUID ticketId) {
-        return TicketInfoDto.of(ticketRepository.findById(ticketId).orElseThrow(() -> new IllegalArgumentException("not found ticket")));
+        return TicketInfoDto.of(ticketRepository.findByUuid(ticketId).orElseThrow(() -> new IllegalArgumentException("not found ticket")));
     }
 
     @Transactional
     public TicketResponseDto cancelTicket(UUID ticketId) {
-        Ticket ticket = ticketRepository.findByIdAndStatusNot(ticketId, TicketStatus.CANCELED).orElseThrow(() -> new IllegalArgumentException("not found ticket or already canceled"));
+        Ticket ticket = ticketRepository.findByUuidAndStatusNot(ticketId, TicketStatus.CANCELED).orElseThrow(() -> new IllegalArgumentException("not found ticket or already canceled"));
         ticket.cancel();
 
         eventService.publishCancelTicket(new CancelTicketEvent(ticket.getSeatId(), ticket.getEventId(), ticket.getSeatNumber(), ticket.getPrice()));

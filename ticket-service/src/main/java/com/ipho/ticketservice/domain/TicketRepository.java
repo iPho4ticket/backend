@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public interface TicketRepository {
     Ticket save(Ticket ticket);
-    Optional<Ticket> findById(UUID id);
-    Optional<Ticket> findByIdAndStatusNot(UUID id, TicketStatus status);
+    Optional<Ticket> findByUuid(UUID id);
+    Optional<Ticket> findByUuidAndStatusNot(UUID id, TicketStatus status);
 
 }

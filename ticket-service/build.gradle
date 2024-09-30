@@ -22,8 +22,11 @@ dependencies {
     // kafka
     implementation 'org.springframework.kafka:spring-kafka'
 
+    // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+    testImplementation 'org.mockito:mockito-core'
 }
 
 tasks.named('test') {

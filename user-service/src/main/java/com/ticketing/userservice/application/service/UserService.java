@@ -78,6 +78,6 @@ public class UserService {
 	public Delete.Result softDeleteUser(Delete.Soft deleteDto) {
 		User user = repositoryHelper.findOrThrowNotFound(deleteDto.id());
 		user.softDelete(deleteDto.deleterId());
-		return deleteDtoFrom(userRepository.save(user));
+		return deleteDtoFrom(user);
 	}
 }

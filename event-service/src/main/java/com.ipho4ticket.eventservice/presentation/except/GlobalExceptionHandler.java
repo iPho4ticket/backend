@@ -1,4 +1,4 @@
-package service.event.presentation.except;
+package com.ipho4ticket.eventservice.presentation.except;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

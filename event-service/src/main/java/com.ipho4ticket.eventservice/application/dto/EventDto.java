@@ -1,8 +1,8 @@
-package service.event.application.dto;
+package com.ipho4ticket.eventservice.application.dto;
 
+import com.ipho4ticket.eventservice.domain.model.Event;
 import lombok.Builder;
 import lombok.Getter;
-import service.event.domain.model.Event;
 
 import java.io.Serializable;
 import java.time.LocalDate;

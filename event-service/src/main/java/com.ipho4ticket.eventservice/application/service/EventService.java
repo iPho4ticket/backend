@@ -1,14 +1,14 @@
-package service.event.application.service;
+package com.ipho4ticket.eventservice.application.service;
 
+import com.ipho4ticket.eventservice.domain.model.Event;
+import com.ipho4ticket.eventservice.domain.repository.EventRepository;
+import com.ipho4ticket.eventservice.presentation.request.EventRequest;
 import com.querydsl.core.BooleanBuilder;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import service.event.domain.model.Event;
-import service.event.domain.model.QEvent;
-import service.event.domain.repository.EventRepository;
-import service.event.presentation.request.EventRequest;
 
 import java.util.UUID;
 
@@ -22,22 +22,25 @@ public class EventService {
         return eventRepository.save(event);
     }
 
+    // QEvent파일이 main이 아닌 test밑에 만들어짐
+    // buildSrc gradle에 test dependencies 주석처리 후에도 동일
     public Page<Event> searchEvents(String title, String description, Pageable pageable) {
-        QEvent qEvent = QEvent.event;
-
-        BooleanBuilder builder = new BooleanBuilder();
-        builder.and(qEvent.isDeleted.isFalse());
-
-        // 제목 조건 추가
-        if (title != null && !title.isEmpty()) {
-            builder.and(qEvent.title.containsIgnoreCase(title));
-        }
-
-        // 설명 조건 추가
-        if (description != null && !description.isEmpty()) {
-            builder.and(qEvent.description.containsIgnoreCase(description));
-        }
-        return eventRepository.findAll(builder, pageable);
+//        QEvent qEvent = QEvent.event;
+//
+//        BooleanBuilder builder = new BooleanBuilder();
+//        builder.and(qEvent.isDeleted.isFalse());
+//
+//        // 제목 조건 추가
+//        if (title != null && !title.isEmpty()) {
+//            builder.and(qEvent.title.containsIgnoreCase(title));
+//        }
+//
+//        // 설명 조건 추가
+//        if (description != null && !description.isEmpty()) {
+//            builder.and(qEvent.description.containsIgnoreCase(description));
+//        }
+//        return eventRepository.findAll(builder, pageable);
+        return null;
 
     }
 

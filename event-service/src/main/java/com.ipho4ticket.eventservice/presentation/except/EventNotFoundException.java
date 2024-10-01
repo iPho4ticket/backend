@@ -1,4 +1,4 @@
-package service.event.presentation.except;
+package com.ipho4ticket.eventservice.presentation.except;
 
 public class EventNotFoundException extends RuntimeException {
 

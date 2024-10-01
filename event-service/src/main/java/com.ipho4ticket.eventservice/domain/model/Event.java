@@ -1,4 +1,4 @@
-package service.event.domain.model;
+package com.ipho4ticket.eventservice.domain.model;
 
 import jakarta.persistence.*;
 import lombok.*;

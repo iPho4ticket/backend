@@ -1,16 +1,15 @@
-package service.event.presentation.controller;
+package com.ipho4ticket.eventservice.presentation.controller;
 
+import com.ipho4ticket.eventservice.application.dto.EventDto;
+import com.ipho4ticket.eventservice.application.service.EventService;
+import com.ipho4ticket.eventservice.domain.model.Event;
+import com.ipho4ticket.eventservice.presentation.request.EventRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import service.event.application.dto.EventDto;
-import service.event.application.service.EventService;
-import service.event.domain.model.Event;
-import service.event.presentation.request.EventRequest;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController

@@ -1,4 +1,4 @@
-package service.event.infra.config;
+package com.ipho4ticket.eventservice.infra.config;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;

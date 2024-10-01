@@ -4,7 +4,6 @@ import com.ipho4ticket.paymentservice.application.service.PaymentService;
 import com.ipho4ticket.paymentservice.presentation.request.PaymentRequestDTO;
 import com.ipho4ticket.paymentservice.presentation.response.PaymentResponseDTO;
 import java.nio.file.AccessDeniedException;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +31,8 @@ public class PaymentController {
 
     // 1. 결제 등록 (POST)
     @PostMapping
-    public ResponseEntity<PaymentResponseDTO> createPayment(@RequestBody PaymentRequestDTO request) {
+    public ResponseEntity<PaymentResponseDTO> createPayment(
+        @RequestBody PaymentRequestDTO request) {
         PaymentResponseDTO payment = paymentService.createPayment(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(payment);
     }
@@ -50,17 +50,17 @@ public class PaymentController {
     public ResponseEntity<Page<PaymentResponseDTO>> getAllPayments(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size
-        ) {
+    ) {
 
         // 현재 사용자 ID 가져오기 (Spring Security)
         // Long currentUserId = ((CustomUserDetails) authentication.getPrincipal()).getUserId();
-
 
         // Pageable 객체 생성 (페이지 번호와 페이지 크기)
         Pageable pageable = PageRequest.of(page, size);
 
         // 서비스에서 결제 목록 조회
-        Page<PaymentResponseDTO> paymentPage = paymentService.getAllPayments(exampleUserId, pageable);
+        Page<PaymentResponseDTO> paymentPage = paymentService.getAllPayments(exampleUserId,
+            pageable);
 
         return ResponseEntity.ok(paymentPage);
     }

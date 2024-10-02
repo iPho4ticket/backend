@@ -24,11 +24,11 @@ public class SeatService {
     public SeatResponseDto createSeat(@Valid SeatRequestDto request) {
         // 행 값+열 값 -> 좌석 생성
         Seat seat=Seat.create(request);
-        seatRepository.save(seat);
 
         // 좌석 상태 변경 - 판매가능
         seat.updateStatus(SeatStatus.AVAILABLE);
 
+        seatRepository.save(seat);
         return toResponseDTO(seat);
     }
 
@@ -53,6 +53,7 @@ public class SeatService {
 
     private SeatResponseDto toResponseDTO(Seat seat){
         return SeatResponseDto.builder()
+                .seatId(seat.getId())
                 .seatNumber(seat.getSeatNumber())
                 .price(seat.getPrice())
                 .status(seat.getStatus())

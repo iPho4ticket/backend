@@ -28,7 +28,6 @@ public class Seat extends BaseEntity{
     private String seatNumber;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private SeatStatus status;
 
     @Column(nullable = false)
@@ -36,7 +35,7 @@ public class Seat extends BaseEntity{
 
     public static Seat create (SeatRequestDto request) {
         return Seat.builder()
-                .eventId(request.eventID())
+                .eventId(request.eventId())
                 .seatNumber(createSeatNum(request.row(), request.column()))
                 .price(request.price())
                 .build();

@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record SeatRequestDto(
-        UUID eventID,
+        UUID eventId,
 
         @Pattern(regexp = "^[A-Z]$", message = "Row must be a single uppercase letter (A-Z).")
         String row,

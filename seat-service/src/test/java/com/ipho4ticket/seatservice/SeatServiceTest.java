@@ -49,7 +49,7 @@ class SeatServiceTest {
     // SeatRequestDTO를 이용해 Seat 객체 생성하는 메서드
     private Seat createSeatFromRequest(UUID seatId, SeatRequestDto request, SeatStatus status) {
         String seatNumber = request.row() + request.column();
-        return new Seat(seatId, request.eventID(), seatNumber, status, request.price());
+        return new Seat(seatId, request.eventId(), seatNumber, status, request.price());
     }
 
     @Test

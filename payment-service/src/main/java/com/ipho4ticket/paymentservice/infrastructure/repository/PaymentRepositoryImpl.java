@@ -24,24 +24,52 @@ public class PaymentRepositoryImpl implements CustomPaymentRepository {
 
     @Override
     public Page<Payment> searchWithParams(Map<String, String> searchParams, Pageable pageable) {
-        // JPQL 또는 Criteria API로 커스텀 쿼리 작성
+        // 페이징 처리를 위해 COUNT 쿼리
+        String countQueryStr = "SELECT COUNT(p) FROM Payment p WHERE 1=1";
         String queryStr = "SELECT p FROM Payment p WHERE 1=1";
 
+        // 조건 추가
         if (searchParams.containsKey("status")) {
+            countQueryStr += " AND p.status = :status";
             queryStr += " AND p.status = :status";
         }
 
         if (searchParams.containsKey("amountMin")) {
+            countQueryStr += " AND p.amount >= :amountMin";
             queryStr += " AND p.amount >= :amountMin";
         }
 
         if (searchParams.containsKey("amountMax")) {
+            countQueryStr += " AND p.amount <= :amountMax";
             queryStr += " AND p.amount <= :amountMax";
         }
 
-        TypedQuery<Payment> query = entityManager.createQuery(queryStr, Payment.class);
+        // Count 쿼리 실행
+        TypedQuery<Long> countQuery = entityManager.createQuery(countQueryStr, Long.class);
 
         // 파라미터 바인딩
+        if (searchParams.containsKey("status")) {
+            PaymentStatus status = PaymentStatus.valueOf(searchParams.get("status"));
+            countQuery.setParameter("status", status);
+        }
+
+        if (searchParams.containsKey("amountMin")) {
+            BigDecimal amountMin = new BigDecimal(searchParams.get("amountMin"));
+            countQuery.setParameter("amountMin", amountMin);
+        }
+
+        if (searchParams.containsKey("amountMax")) {
+            BigDecimal amountMax = new BigDecimal(searchParams.get("amountMax"));
+            countQuery.setParameter("amountMax", amountMax);
+        }
+
+        // 전체 데이터 수
+        long totalRows = countQuery.getSingleResult();
+
+        // 실제 데이터 쿼리 실행
+        TypedQuery<Payment> query = entityManager.createQuery(queryStr, Payment.class);
+
+        // 파라미터 바인딩 (다시 설정)
         if (searchParams.containsKey("status")) {
             query.setParameter("status", PaymentStatus.valueOf(searchParams.get("status")));
         }
@@ -55,7 +83,6 @@ public class PaymentRepositoryImpl implements CustomPaymentRepository {
         }
 
         // 페이징 처리
-        int totalRows = query.getResultList().size();  // 전체 데이터 수
         query.setFirstResult((int) pageable.getOffset());  // 시작 인덱스
         query.setMaxResults(pageable.getPageSize());       // 한 페이지에 표시할 데이터 수
 
@@ -64,6 +91,7 @@ public class PaymentRepositoryImpl implements CustomPaymentRepository {
         return new PageImpl<>(payments, pageable, totalRows);  // 페이징된 결과 반환
     }
 }
+
 
 
 

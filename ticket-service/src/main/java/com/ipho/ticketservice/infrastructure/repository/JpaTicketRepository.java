@@ -1,7 +1,7 @@
-package com.ipho.ticketservice.infrastructure.persistence;
+package com.ipho.ticketservice.infrastructure.repository;
 
-import com.ipho.ticketservice.domain.Ticket;
-import com.ipho.ticketservice.domain.TicketRepository;
+import com.ipho.ticketservice.domain.model.Ticket;
+import com.ipho.ticketservice.domain.repository.TicketRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;

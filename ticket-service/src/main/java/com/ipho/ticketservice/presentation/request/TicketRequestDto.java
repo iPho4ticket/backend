@@ -1,4 +1,4 @@
-package com.ipho.ticketservice.application.dto;
+package com.ipho.ticketservice.presentation.request;
 
 import java.util.UUID;
 

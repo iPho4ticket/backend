@@ -1,6 +1,6 @@
-package com.ipho.ticketservice.presentation;
+package com.ipho.ticketservice.presentation.controller;
 
-import com.ipho.ticketservice.application.dto.TicketRequestDto;
+import com.ipho.ticketservice.presentation.request.TicketRequestDto;
 import com.ipho.ticketservice.application.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,5 +30,8 @@ public class TicketController {
     public ResponseEntity<?> cancelTicket(@PathVariable UUID ticketId) {
         return ResponseEntity.ok(ticketService.cancelTicket(ticketId));
     }
+
+
+
 
 }

@@ -1,6 +1,8 @@
-package com.ipho.ticketservice.domain;
+package com.ipho.ticketservice.domain.repository;
 
-import com.ipho.ticketservice.domain.Ticket;
+
+import com.ipho.ticketservice.domain.model.Ticket;
+import com.ipho.ticketservice.domain.model.TicketStatus;
 
 import java.util.Optional;
 import java.util.UUID;

@@ -1,6 +1,6 @@
 package com.ipho.ticketservice.application.dto;
 
-import com.ipho.ticketservice.domain.Ticket;
+import com.ipho.ticketservice.domain.model.Ticket;
 
 import java.util.UUID;
 

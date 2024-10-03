@@ -1,4 +1,4 @@
-package com.ipho.ticketservice.domain;
+package com.ipho.ticketservice.domain.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

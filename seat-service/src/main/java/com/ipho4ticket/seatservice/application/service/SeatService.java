@@ -47,7 +47,6 @@ public class SeatService {
     public void deleteSeat(UUID seatId) {
         Seat seat=seatRepository.findById(seatId)
                 .orElseThrow(()->new IllegalArgumentException(seatId+"는 찾을 수 없는 좌석입니다."));
-        seat.delete(seatId);
         seatRepository.delete(seat);
     }
 

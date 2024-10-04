@@ -1,9 +1,11 @@
 package com.ipho4ticket.eventservice;
 
+import com.ipho4ticket.eventservice.application.dto.EventResponseDto;
 import com.ipho4ticket.eventservice.application.service.EventService;
 import com.ipho4ticket.eventservice.domain.model.Event;
 import com.ipho4ticket.eventservice.domain.repository.EventRepository;
-import com.ipho4ticket.eventservice.presentation.request.EventRequest;
+import com.ipho4ticket.eventservice.presentation.request.EventRequestDto;
+import com.querydsl.core.BooleanBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,140 +25,135 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 public class EventServiceTest {
+    @InjectMocks
+    private EventService eventService;
 
     @Mock
     private EventRepository eventRepository;
 
-    @InjectMocks
-    private EventService eventService;
-
-    private List<Event> events;  // List of events
-    private UUID eventId;  // Event UUID
+    private EventRequestDto eventRequestDto;
+    private Event event;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
-        events = new ArrayList<>();
 
-        for (int i = 1; i <= 5; i++) {
-            eventId = UUID.randomUUID();
-            Event event = Event.builder()
-                    .id(eventId)
-                    .title("Sample Event Title " + i)
-                    .description("This is a sample event description " + i + ".")
-                    .date(LocalDate.parse("2024-09-30"))
-                    .startTime(LocalDateTime.parse("2024-09-30T10:00:00"))
-                    .endTime(LocalDateTime.parse("2024-09-30T12:00:00"))
-                    .build();
-            events.add(event);
-        }
+        eventRequestDto = new EventRequestDto(
+                "Sample Event",
+                "Sample Description",
+                LocalDate.now(),
+                LocalDateTime.now(),
+                LocalDateTime.now().plusHours(2)
+        );
 
-        when(eventRepository.findAllByIsDeletedFalse(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(events));
-        when(eventRepository.findById(any(UUID.class))).thenReturn(Optional.of(events.get(0)));
+        event = Event.create(eventRequestDto);
+        event = Event.builder()
+                .eventId(UUID.randomUUID()) // Set eventId here
+                .title(event.getTitle())
+                .description(event.getDescription())
+                .date(event.getDate())
+                .startTime(event.getStartTime())
+                .endTime(event.getEndTime())
+                .build();
     }
 
     @Test
-    @DisplayName("이벤트 생성")
-    public void createEvent() {
-        EventRequest newEventRequest = EventRequest.builder()
-                .title("New Sample Event")
-                .description("This is a new sample event description.")
-                .date(LocalDate.parse("2024-09-30"))
-                .startTime(LocalDateTime.parse("2024-09-30T10:00:00"))
-                .endTime(LocalDateTime.parse("2024-09-30T12:00:00"))
-                .build();
+    void createEvent() {
+        when(eventRepository.save(any(Event.class))).thenReturn(event);
 
-        Event createdEvent = Event.builder()
-                .id(UUID.randomUUID())
-                .title(newEventRequest.getTitle())
-                .description(newEventRequest.getDescription())
-                .date(newEventRequest.getDate())
-                .startTime(newEventRequest.getStartTime())
-                .endTime(newEventRequest.getEndTime())
-                .build();
+        EventResponseDto response = eventService.createEvent(eventRequestDto);
 
-        when(eventRepository.save(any(Event.class))).thenReturn(createdEvent);
-
-        Event result = eventService.createEvent(newEventRequest.toEntityTest());
-
-        assertNotNull(result);
-        assertEquals(createdEvent.getId(), result.getId());
-        assertEquals(createdEvent.getTitle(), result.getTitle());
+        assertNotNull(response);
+        assertEquals(event.getTitle(), response.getTitle());
+        assertEquals(event.getDescription(), response.getDescription());
+        assertEquals(event.getDate(), response.getDate());
+        assertEquals(event.getStartTime(), response.getStartTime());
+        assertEquals(event.getEndTime(), response.getEndTime());
         verify(eventRepository, times(1)).save(any(Event.class));
     }
 
     @Test
-    @DisplayName("이벤트 전체조회")
-    public void getEvents() {
-        Pageable pageable = Pageable.ofSize(10);
-        Page<Event> result = eventService.getEvents(pageable);
+    void updateEvent() {
+        UUID eventId = event.getEventId();
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+        when(eventRepository.save(any(Event.class))).thenReturn(event);
 
-        assertNotNull(result);
-        assertEquals(events.size(), result.getTotalElements());
+        EventResponseDto response = eventService.updateEvent(eventId, eventRequestDto);
 
-        result.getContent().forEach(e -> System.out.println("Event ID: " + e.getId() +
-                ", Title: " + e.getTitle() +
-                ", Description: " + e.getDescription()));
-
-        verify(eventRepository, times(1)).findAllByIsDeletedFalse(pageable);
-    }
-
-    @Test
-    @DisplayName("이벤트 조회")
-    public void getEvent() {
-        Event foundEvent = eventService.getEvent(events.get(0).getId());
-
-        assertNotNull(foundEvent);
-        assertEquals(events.get(0).getId(), foundEvent.getId());
-        System.out.println("이벤트 조회 결과: " + foundEvent.getId());
-        verify(eventRepository, times(1)).findById(events.get(0).getId());
-    }
-
-    @Test
-    @DisplayName("이벤트 수정")
-    public void updateEvent() {
-        // Given
-        UUID id = events.get(0).getId();
-        EventRequest updateRequest = EventRequest.builder()
-                .title("Updated Event Title")
-                .description("Updated event description.")
-                .date(LocalDate.parse("2024-09-30"))
-                .startTime(LocalDateTime.parse("2024-09-30T10:00:00"))
-                .endTime(LocalDateTime.parse("2024-09-30T12:00:00"))
-                .build();
-
-        when(eventRepository.findById(id)).thenReturn(Optional.of(events.get(0)));
-        when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        // When
-        Event updatedEvent = eventService.updateEvent(id, updateRequest);
-
-        // Then
-        assertNotNull(updatedEvent);
-        assertEquals(updateRequest.getTitle(), updatedEvent.getTitle());
-        assertEquals(updateRequest.getDescription(), updatedEvent.getDescription());
-        System.out.println("이벤트 수정 완료: ID = " + updatedEvent.getId() +
-                ", Title = " + updatedEvent.getTitle() +
-                ", Description = " + updatedEvent.getDescription());
-
-        verify(eventRepository, times(1)).findById(id);
+        assertNotNull(response);
+        assertEquals(event.getTitle(), response.getTitle());
+        verify(eventRepository, times(1)).findById(eventId);
         verify(eventRepository, times(1)).save(any(Event.class));
     }
 
     @Test
-    @DisplayName("이벤트 삭제")
-    public void deleteEvent() {
-        // Given
-        UUID id = events.get(0).getId();
-        when(eventRepository.findById(id)).thenReturn(Optional.of(events.get(0)));
+    void updateEvent_NotFound() {
+        UUID eventId = UUID.randomUUID();
+        when(eventRepository.findById(eventId)).thenReturn(Optional.empty());
 
-        // When
-        eventService.deleteEvent(id);
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            eventService.updateEvent(eventId, eventRequestDto);
+        });
 
-        // Then
-        verify(eventRepository, times(1)).findById(id);
-        verify(eventRepository, times(1)).save(any(Event.class)); // Verify save is called to persist changes
-        System.out.println("이벤트 삭제 완료: ID = " + id);
+        assertEquals(eventId + "는 찾을 수 없는 이벤트 아이디입니다.", exception.getMessage());
+    }
+
+    @Test
+    void deleteEvent() {
+        UUID eventId = event.getEventId();
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+
+        eventService.deleteEvent(eventId);
+
+        verify(eventRepository, times(1)).delete(event);
+    }
+
+    @Test
+    void deleteEvent_NotFound() {
+        UUID eventId = UUID.randomUUID();
+        when(eventRepository.findById(eventId)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            eventService.deleteEvent(eventId);
+        });
+
+        assertEquals(eventId + "는 찾을 수 없는 이벤트 아이디입니다.", exception.getMessage());
+    }
+
+    @Test
+    void getEvent() {
+        UUID eventId = event.getEventId();
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+
+        EventResponseDto response = eventService.getEvent(eventId);
+
+        assertNotNull(response);
+        assertEquals(event.getTitle(), response.getTitle());
+        verify(eventRepository, times(1)).findById(eventId);
+    }
+
+    @Test
+    void getEvent_NotFound() {
+        UUID eventId = UUID.randomUUID();
+        when(eventRepository.findById(eventId)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            eventService.getEvent(eventId);
+        });
+
+        assertEquals(eventId + "는 찾을 수 없는 이벤트 아이디입니다.", exception.getMessage());
+    }
+
+    @Test
+    void getEvents() {
+        Page<Event> eventPage = new PageImpl<>(Arrays.asList(event));
+        when(eventRepository.findAll(any(Pageable.class))).thenReturn(eventPage);
+
+        Page<EventResponseDto> response = eventService.getEvents(Pageable.ofSize(10));
+
+        assertNotNull(response);
+        assertEquals(1, response.getTotalElements());
+        assertEquals(event.getTitle(), response.getContent().get(0).getTitle());
+        verify(eventRepository, times(1)).findAll(any(Pageable.class));
     }
 }

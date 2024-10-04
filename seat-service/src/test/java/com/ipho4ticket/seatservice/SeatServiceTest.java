@@ -1,5 +1,7 @@
 package com.ipho4ticket.seatservice;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ipho4ticket.seatservice.application.dto.SeatResponseDto;
 import com.ipho4ticket.seatservice.application.service.SeatService;
 import com.ipho4ticket.seatservice.domain.model.Seat;
@@ -14,9 +16,12 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,6 +32,12 @@ class SeatServiceTest {
 
     @Mock
     private SeatRepository seatRepository;
+
+    @Mock
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Mock
+    private ObjectMapper objectMapper;
 
     @InjectMocks
     private SeatService seatService;
@@ -78,6 +89,10 @@ class SeatServiceTest {
 
         when(seatRepository.findByEventId(eventId, pageable)).thenReturn(seatPage);
 
+        // RedisTemplate의 opsForValue() 메서드가 호출될 경우의 리턴 값 설정
+        ValueOperations<String, Object> valueOps = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+
         Page<SeatResponseDto> result = seatService.getAllSeats(eventId, pageable);
 
         verify(seatRepository, times(1)).findByEventId(eventId, pageable);
@@ -89,19 +104,42 @@ class SeatServiceTest {
     }
 
     @Test
-    void testGetSeat() {
+    void testGetSeat() throws JsonProcessingException {
+        // 주어진 좌석 ID로 좌석 생성
         Seat seat = createSeatFromRequest(seatId, request, SeatStatus.AVAILABLE);
+        String cacheKey = "seat::" + seatId;
 
-        when(seatRepository.findById(seatId)).thenReturn(Optional.of(seat));
+        // RedisTemplate의 opsForValue() 메서드가 호출될 경우의 리턴 값 설정
+        ValueOperations<String, Object> valueOps = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+
+        // 캐시에서 좌석을 반환하도록 설정
+        when(valueOps.get(cacheKey)).thenReturn(seat);
+
+        // ObjectMapper의 동작 설정 (직렬화와 역직렬화)
+        when(objectMapper.writeValueAsString(seat)).thenReturn("cachedSeatJson");
+
+        // SeatResponseDto 객체를 빌더 패턴을 사용하여 생성
+        SeatResponseDto seatResponseDto = SeatResponseDto.builder()
+                .seatId(seat.getId())
+                .seatNumber(seat.getSeatNumber())
+                .price(seat.getPrice())
+                .status(seat.getStatus())
+                .build();
+
+        // JSON 문자열을 SeatResponseDto로 변환할 때 반환하도록 설정
+        when(objectMapper.readValue("cachedSeatJson", SeatResponseDto.class)).thenReturn(seatResponseDto);
 
         SeatResponseDto result = seatService.getSeat(seatId);
 
-        verify(seatRepository, times(1)).findById(seatId);
+        verify(redisTemplate.opsForValue(), times(1)).get(cacheKey); // 캐시에서 호출된 횟수 검증
+        verify(seatRepository, never()).findAll(); // 캐시 적중 시 findAll 호출되지 않아야 함
 
         assertEquals(seat.getSeatNumber(), result.getSeatNumber());
         assertEquals(seat.getPrice(), result.getPrice());
         assertEquals(seat.getStatus(), result.getStatus());
     }
+
 
     @Test
     void testDeleteSeat() {

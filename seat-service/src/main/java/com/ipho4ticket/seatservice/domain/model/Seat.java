@@ -46,14 +46,6 @@ public class Seat{
                 .build();
     }
 
-//    public Seat(UUID id, UUID eventId, SeatStatus status, String seatNumber, BigDecimal price) {
-//        this.id = id;
-//        this.eventId = eventId;
-//        this.status= status;
-//        this.seatNumber = seatNumber;
-//        this.price = price;
-//    }
-
     private static String createSeatNum(String row, int column) {
         return row+column;
     }

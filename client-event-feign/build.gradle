@@ -1,0 +1,13 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot'
+	id 'spring-cloud-conventions'
+}
+
+dependencies {
+	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public record EventInfoResponse(
+public record EventResponseDto(
         UUID eventId,
         String title,
         String description,

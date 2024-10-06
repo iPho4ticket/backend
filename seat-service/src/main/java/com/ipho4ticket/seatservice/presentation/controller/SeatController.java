@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -30,13 +31,13 @@ public class SeatController {
 
     // 이벤트 좌석 전체 조회
     @GetMapping("/events/{event_id}")
-    public ResponseEntity<Page<SeatResponseDto>> getAllSeats(
+    public ResponseEntity<Map<String, Object>> getAllSeats(
             @PathVariable("event_id") UUID event_id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<SeatResponseDto> seats = seatService.getAllSeats(event_id, pageable);
+        Map<String, Object> seats = seatService.getAllSeats(event_id, pageable);
         return ResponseEntity.ok(seats);
     }
 

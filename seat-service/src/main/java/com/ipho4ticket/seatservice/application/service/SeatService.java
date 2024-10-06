@@ -1,7 +1,8 @@
 package com.ipho4ticket.seatservice.application.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ipho4ticket.clienteventfeign.ClientEventFeign;
+import com.ipho4ticket.clienteventfeign.dto.EventResponseDto;
 import com.ipho4ticket.seatservice.domain.model.Seat;
 import com.ipho4ticket.seatservice.domain.model.SeatStatus;
 import com.ipho4ticket.seatservice.domain.repository.SeatRepository;
@@ -10,7 +11,6 @@ import com.ipho4ticket.seatservice.application.dto.SeatResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -18,8 +18,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -31,6 +31,7 @@ public class SeatService {
     private final SeatRepository seatRepository;
     private final RedisTemplate<String,Object> redisTemplate;
     private final ObjectMapper objectMapper;
+    private final ClientEventFeign clientEventFeign;
 
     @Transactional
     public SeatResponseDto createSeat(@Valid SeatRequestDto request) {
@@ -49,26 +50,34 @@ public class SeatService {
      * 1. redis에 데이터가 없다면 -> TTL 초과되었다는 뜻 -> 전체 좌석 다시 저장
      * 2. redis에 데이터가 있다면 -> redis에서 호출
      */
-    public Page<SeatResponseDto> getAllSeats(UUID eventId, Pageable pageable) {
+    public Map<String, Object> getAllSeats(UUID eventId, Pageable pageable) {
+
+        // 관련 event 조회
+        EventResponseDto event=clientEventFeign.getEvent(eventId);
+
         // Redis에서 데이터 조회
+        Page<SeatResponseDto> seatsPage;
+
         List<SeatResponseDto> cachedSeats = (List<SeatResponseDto>) redisTemplate.opsForValue().get("seats"); // 'seats' 키로 데이터를 가져옴
 
         // Redis에 캐시된 데이터가 있는지 확인
         if (cachedSeats != null) {
-            return new PageImpl<>(cachedSeats, pageable, cachedSeats.size()); // 캐시된 데이터가 있으면 반환
+            seatsPage=new PageImpl<>(cachedSeats, pageable, cachedSeats.size()); // 캐시된 데이터가 있으면 반환
+        }else{
+            // 데이터베이스에서 좌석 정보를 조회
+            Page<Seat> seats = seatRepository.findByEventId(eventId, pageable);
+
+            // 좌석 정보를 DTO로 변환
+            List<SeatResponseDto> seatResponseDtos = seats.stream()
+                    .map(this::toResponseDTO)
+                    .collect(Collectors.toList());
+
+            cacheSeats(seatResponseDtos);
+
+            seatsPage=new PageImpl<>(seatResponseDtos, pageable, seatResponseDtos.size());
         }
-
-        // 데이터베이스에서 좌석 정보를 조회
-        Page<Seat> seats = seatRepository.findByEventId(eventId, pageable);
-
-        // 좌석 정보를 DTO로 변환
-        List<SeatResponseDto> seatResponseDtos = seats.stream()
-                .map(this::toResponseDTO)
-                .collect(Collectors.toList());
-
-        cacheSeats(seatResponseDtos);
-
-        return new PageImpl<>(seatResponseDtos, pageable, seatResponseDtos.size());
+        // 이벤트와 좌석 정보를 Map으로 반환
+        return Map.of("event", event, "seats", seatsPage);
     }
 
 
@@ -79,6 +88,7 @@ public class SeatService {
      */
     @SneakyThrows
     public SeatResponseDto getSeat(UUID seatId) {
+
         // Redis에서 좌석 데이터 조회
         String cacheKey = "seat::" + seatId; // 캐시 키 설정
         Object cachedSeat = redisTemplate.opsForValue().get(cacheKey);

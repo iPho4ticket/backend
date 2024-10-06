@@ -2,6 +2,7 @@ package com.ipho4ticket.seatservice;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ipho4ticket.clienteventfeign.dto.EventResponseDto;
 import com.ipho4ticket.seatservice.application.dto.SeatResponseDto;
 import com.ipho4ticket.seatservice.application.service.SeatService;
 import com.ipho4ticket.seatservice.domain.model.Seat;
@@ -20,10 +21,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
 import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -83,24 +81,36 @@ class SeatServiceTest {
 
     @Test
     void testGetAllSeats() {
+        // Pageable 및 Seat 생성
         Pageable pageable = mock(Pageable.class);
         Seat seat = createSeatFromRequest(seatId, request, SeatStatus.AVAILABLE);
         Page<Seat> seatPage = new PageImpl<>(Collections.singletonList(seat));
 
+        // SeatRepository에서 EventId로 좌석 목록을 반환하도록 설정
         when(seatRepository.findByEventId(eventId, pageable)).thenReturn(seatPage);
 
-        // RedisTemplate의 opsForValue() 메서드가 호출될 경우의 리턴 값 설정
+        // RedisTemplate의 opsForValue() 메서드 모킹 및 반환 값 설정
         ValueOperations<String, Object> valueOps = mock(ValueOperations.class);
         when(redisTemplate.opsForValue()).thenReturn(valueOps);
 
-        Page<SeatResponseDto> result = seatService.getAllSeats(eventId, pageable);
+        // SeatService의 getAllSeats() 메서드 호출
+        Map<String, Object> result = seatService.getAllSeats(eventId, pageable);
 
+        // SeatRepository가 올바르게 호출되었는지 검증
         verify(seatRepository, times(1)).findByEventId(eventId, pageable);
 
-        assertEquals(1, result.getTotalElements());
-        assertEquals(seat.getSeatNumber(), result.getContent().get(0).getSeatNumber());
-        assertEquals(seat.getPrice(), result.getContent().get(0).getPrice());
-        assertEquals(seat.getStatus(), result.getContent().get(0).getStatus());
+        // 반환된 결과에서 'seats'를 추출하고 검증
+        Page<SeatResponseDto> seatsPage = (Page<SeatResponseDto>) result.get("seats");
+        SeatResponseDto seatResponseDto = seatsPage.getContent().get(0);
+
+        // 좌석 정보가 올바르게 매핑되었는지 확인
+        assertEquals(seat.getSeatNumber(), seatResponseDto.getSeatNumber());
+        assertEquals(seat.getPrice(), seatResponseDto.getPrice());
+        assertEquals(seat.getStatus(), seatResponseDto.getStatus());
+
+        // 이벤트 정보가 올바르게 반환되었는지 확인 (필요 시 추가)
+        EventResponseDto eventResponse = (EventResponseDto) result.get("event");
+        assertNotNull(eventResponse);
     }
 
     @Test

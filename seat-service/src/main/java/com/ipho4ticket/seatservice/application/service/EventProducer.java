@@ -1,7 +1,7 @@
 package com.ipho4ticket.seatservice.application.service;
 
-import com.ipho4ticket.seatservice.application.events.SeatTopic;
 import com.ipho4ticket.seatservice.application.events.TicketMakingEvent;
+import com.ipho4ticket.seatservice.infra.messaging.EventSerializer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -12,6 +12,6 @@ public class EventProducer {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public void publishTicketMakingEvent(TicketMakingEvent event) {
-        kafkaTemplate.send(SeatTopic.TICKET_MAKING.getTopic(), event);
+        kafkaTemplate.send("ticket-making", EventSerializer.serialize(event));
     }
 }

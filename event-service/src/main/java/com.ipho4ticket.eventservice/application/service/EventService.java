@@ -7,7 +7,6 @@ import com.ipho4ticket.eventservice.domain.repository.EventRepository;
 import com.ipho4ticket.eventservice.presentation.request.EventRequestDto;
 import com.querydsl.core.BooleanBuilder;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;

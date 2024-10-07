@@ -24,7 +24,7 @@ public class TicketInternalController {
 
     }
 
-    @PostMapping("/api/v1/internal/ticket/{ticket_id}")
+    @PostMapping("/{ticket_id}")
     public ResponseEntity<ValidationResponse> changeTicketStatus(@PathVariable("ticket_id") UUID ticketId) {
         return ResponseEntity.ok(ticketService.completePayment(ticketId));
     }

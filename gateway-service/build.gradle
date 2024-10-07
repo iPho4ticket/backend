@@ -7,8 +7,18 @@ plugins {
 }
 
 dependencies {
+    // Spring Security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // Spring Cloud Gateway
     implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
 
-    // Actuator for monitoring
+    // Caffeine Cache
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.2'
+
+    // Actuator for monitoring and health checks
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // Reactor test support
+    testImplementation 'io.projectreactor:reactor-test'
 }

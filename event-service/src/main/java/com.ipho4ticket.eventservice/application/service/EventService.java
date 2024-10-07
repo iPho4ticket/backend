@@ -20,7 +20,7 @@ public class EventService {
     private final EventRepository eventRepository;
 
     public EventResponseDto createEvent(EventRequestDto request) {
-        Event event=Event.create(request);
+        Event event=new Event(request.title(),request.description(),request.date(),request.startTime(),request.endTime());
         eventRepository.save(event);
         return toResponseDTO(event);
     }
@@ -46,7 +46,7 @@ public class EventService {
     public EventResponseDto updateEvent(UUID id, EventRequestDto request) {
         Event event=eventRepository.findById(id)
                 .orElseThrow(()->new IllegalArgumentException(id+"는 찾을 수 없는 이벤트 아이디입니다."));
-        event.update(request);
+        event.update(request.title(),request.description(),request.date(),request.startTime(),request.endTime());
         eventRepository.save(event);
         return toResponseDTO(event);
     }

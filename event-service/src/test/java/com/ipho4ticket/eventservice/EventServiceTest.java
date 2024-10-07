@@ -46,7 +46,7 @@ public class EventServiceTest {
                 LocalDateTime.now().plusHours(2)
         );
 
-        event = Event.create(eventRequestDto);
+        event = new Event(eventRequestDto.title(),eventRequestDto.description(),eventRequestDto.date(),eventRequestDto.startTime(),eventRequestDto.endTime());
         event = Event.builder()
                 .eventId(UUID.randomUUID()) // Set eventId here
                 .title(event.getTitle())

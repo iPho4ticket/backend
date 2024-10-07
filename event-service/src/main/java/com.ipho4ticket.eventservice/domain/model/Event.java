@@ -1,5 +1,6 @@
 package com.ipho4ticket.eventservice.domain.model;
 
+import com.ipho4ticket.eventservice.presentation.request.EventRequestDto;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -15,19 +16,19 @@ import java.util.UUID;
 @NoArgsConstructor(access= AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class Event extends BaseEntity{
+public class Event{
     @Id
     @GeneratedValue(strategy= GenerationType.UUID)
     @Column(name="event_id")
-    private UUID id;
+    private UUID eventId;
 
-    @Column(nullable=false)
+    @Column(name="title", nullable=false)
     private String title;
 
-    @Column(nullable=false)
+    @Column(name="description", nullable=false)
     private String description;
 
-    @Column(nullable=false)
+    @Column(name="date", nullable=false)
     private LocalDate date;
 
     @Column(nullable=false,name="start_time")
@@ -36,11 +37,20 @@ public class Event extends BaseEntity{
     @Column(nullable=false,name="end_time")
     private LocalDateTime endTime;
 
-    public void update(String title, String description, LocalDate date, LocalDateTime startTime, LocalDateTime endTime) {
-        this.title = title;
-        this.description = description;
-        this.date = date;
-        this.startTime = startTime;
-        this.endTime = endTime;
+    public static Event create (EventRequestDto request) {
+        return Event.builder()
+                .title(request.title())
+                .description(request.title())
+                .date(request.date())
+                .startTime(request.startTime())
+                .endTime(request.endTime())
+                .build();
+    }
+    public void update(EventRequestDto request){
+        this.title = request.title();
+        this.description = request.description();
+        this.date = request.date();
+        this.startTime = request.startTime();
+        this.endTime = request.endTime();
     }
 }

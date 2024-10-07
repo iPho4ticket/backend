@@ -1,0 +1,36 @@
+server:
+  port: ${SERVER_PORT:19090}  # 기본값: 19090
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${ACTUATOR_ENDPOINTS:health,info}  # 기본값: health, info
+  endpoint:
+    health:
+      show-details: ${SHOW_HEALTH_DETAILS:always}  # 기본값: always
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URI:http://localhost:19093}
+          predicates:
+            - Path=/api/v1/auth/**
+        - id: internal-service
+          uri: ${INTERNAL_SERVICE_URI:http://localhost:19090}
+          predicates:
+            - Path=/api/v1/internal/**
+          filters:
+            - name: DenyAccessGatewayFilter  # 필터 추가
+
+# WebClient를 통해 호출하는 auth-service 설정
+auth-service:
+  name: ${AUTH_SERVICE_NAME:auth-service}  # 기본값: auth-service
+  url: ${AUTH_SERVICE_URL:http://localhost:19090}  # 기본값: http://localhost:19090
+
+cache:
+  caffeine:
+    expiration: ${CACHE_EXPIRATION:3600}  # 기본값: 3600초 (1시간)
+    max-size: ${CACHE_MAX_SIZE:1000}    # 기본값: 1000

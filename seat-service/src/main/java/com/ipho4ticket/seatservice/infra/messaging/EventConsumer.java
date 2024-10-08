@@ -15,13 +15,13 @@ public class EventConsumer {
     @KafkaListener(topics="seat-booking",groupId="seat-group")
     public void handleSeatBooking(String message){
         SeatBookingEvent event=EventSerializer.deserialize(message, SeatBookingEvent.class);
-        //seatService.bookSeat(event.getSeatId());
+        seatService.ChangeSeatToSold(event.getSeatId());
     }
 
     @KafkaListener(topics="cancel-payment",groupId="seat-group")
     public void handleCancelPayment(String message){
         CancelPaymentEvent event=EventSerializer.deserialize(message,CancelPaymentEvent.class);
-        //seatService.cancelPayment(event.getSeatId());
+        seatService.ChangeSeatToAvailable(event.getSeatId());
     }
 
 }

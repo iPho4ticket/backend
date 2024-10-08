@@ -1,6 +1,7 @@
 package com.ipho4ticket.clientticketfeign;
 
 import com.ipho4ticket.clientticketfeign.dto.ValidationResponse;
+import java.util.UUID;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,7 +14,7 @@ public interface ClientTicketFeign {
     // 티켓 상태 및 유저 검증
     @GetMapping("/api/v1/internal/ticket/{ticket_id}")
     ValidationResponse validateTicket(
-        @PathVariable("ticket_id") Long ticketId,
+        @PathVariable("ticket_id") UUID ticketId,
         @RequestParam("user_id") Long userId
     );
 

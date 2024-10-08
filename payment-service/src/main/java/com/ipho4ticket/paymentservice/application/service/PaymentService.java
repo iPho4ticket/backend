@@ -1,5 +1,7 @@
 package com.ipho4ticket.paymentservice.application.service;
 
+import com.ipho4ticket.clientticketfeign.ClientTicketFeign;
+import com.ipho4ticket.clientticketfeign.dto.ValidationResponse;
 import com.ipho4ticket.paymentservice.application.dto.ApproveResponse;
 import com.ipho4ticket.paymentservice.application.dto.ReadyResponse;
 import com.ipho4ticket.paymentservice.application.factory.PaymentProcessorFactory;
@@ -26,11 +28,17 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final PaymentProcessorFactory paymentProcessorFactory;
+    private final ClientTicketFeign clientTicketFeign;
+
     @Transactional
     public ReadyResponse createPayment(PaymentRequestDTO request) {
         PaymentProcessor processor = paymentProcessorFactory.getPaymentProcessor(request.paymentMethod());
 
         // 1. ticketId와 userId를 통해 티켓 유효성 검사(추후 외부 API를 통해 검증)
+        ValidationResponse validationResponse = clientTicketFeign.validateTicket(request.ticketId(), request.userId());
+        if (!validationResponse.success()){
+            throw new IllegalStateException(validationResponse.message());
+        }
 
         // 2. 결제 생성
         Payment payment = createNewPayment(request);
@@ -89,7 +97,7 @@ public class PaymentService {
             paymentRepository.save(payment);
 
             // 티켓 상태 업데이트 (추후 외부 API 통해 처리 가능)
-            // updateTicketStatus(payment.getTicketId());
+            // TODO: 시나리오 테스트 이후 카카오 결제 시에 requestParam에 ticket id 추가
 
             return toResponseDTO(payment);
 

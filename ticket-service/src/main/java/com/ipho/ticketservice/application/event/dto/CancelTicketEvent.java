@@ -1,4 +1,4 @@
-package com.ipho.ticketservice.application.event;
+package com.ipho.ticketservice.application.event.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,10 +9,11 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class SeatBookingEvent {
+public class CancelTicketEvent {
 
-    private Long userId;
+    private UUID seatId;
     private UUID eventId;
     private String seatNumber;
     private Double price;
+
 }

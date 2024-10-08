@@ -32,3 +32,7 @@ storage:
       pool-name: db-payment-pool
       data-source-properties:
         rewriteBatchedStatements: true
+
+kakao:
+  pay:
+    secret-key: ${KAKAO_PAY_SECRET_KEY}

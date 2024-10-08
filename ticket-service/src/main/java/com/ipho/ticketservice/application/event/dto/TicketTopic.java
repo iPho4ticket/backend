@@ -1,4 +1,4 @@
-package com.ipho.ticketservice.application.event;
+package com.ipho.ticketservice.application.event.dto;
 
 import lombok.Getter;
 

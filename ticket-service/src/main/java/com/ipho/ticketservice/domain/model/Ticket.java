@@ -35,17 +35,26 @@ public class Ticket {
     private Timestamp expirationTime;
 
 
+
     public Ticket(Long userId, UUID eventId, String seatNumber, Double price) {
         this.userId = userId;
         this.eventId = eventId;
         this.seatNumber = seatNumber;
         this.price = price;
-        this.status = TicketStatus.PENDING;
+        this.status = TicketStatus.OPENED;
         this.reservationTime = Timestamp.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant());
-        // expirationTime 은 어떻게 설정할지?
+        this.expirationTime = Timestamp.from(LocalDateTime.now().plusDays(3).atZone(ZoneId.systemDefault()).toInstant());
+    }
+
+    public void pending() {
+        this.status = TicketStatus.PENDING;
     }
 
     public void cancel() {
         this.status = TicketStatus.CANCELED;
+    }
+
+    public void completePayment() {
+        this.status = TicketStatus.CONFIRMED;
     }
 }

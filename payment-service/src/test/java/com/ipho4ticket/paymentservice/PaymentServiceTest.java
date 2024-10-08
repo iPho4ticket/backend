@@ -1,10 +1,14 @@
 package com.ipho4ticket.paymentservice;
 
+import com.ipho4ticket.paymentservice.application.dto.ApproveResponse;
+import com.ipho4ticket.paymentservice.application.dto.ReadyResponse;
+import com.ipho4ticket.paymentservice.application.factory.PaymentProcessorFactory;
 import com.ipho4ticket.paymentservice.application.service.PaymentService;
 import com.ipho4ticket.paymentservice.domain.model.Payment;
 import com.ipho4ticket.paymentservice.domain.model.PaymentMethod;
 import com.ipho4ticket.paymentservice.domain.model.PaymentStatus;
 import com.ipho4ticket.paymentservice.domain.repository.PaymentRepository;
+import com.ipho4ticket.paymentservice.domain.service.PaymentProcessor;
 import com.ipho4ticket.paymentservice.presentation.request.PaymentRequestDTO;
 import com.ipho4ticket.paymentservice.presentation.response.PaymentResponseDTO;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,13 +38,20 @@ public class PaymentServiceTest {
     @Mock
     private PaymentRepository paymentRepository;
 
+    @Mock
+    private PaymentProcessorFactory paymentProcessorFactory;
+
+    @Mock
+    private PaymentProcessor paymentProcessor;
+
     @InjectMocks
     private PaymentService paymentService;
 
     private Payment payment;
     private Long userId;
     private UUID ticketId;
-
+    private ReadyResponse readyResponse;
+    private ApproveResponse approveResponse;
     @BeforeEach
     void 설정() {
         userId = 1L;
@@ -49,34 +60,89 @@ public class PaymentServiceTest {
             .userId(userId)
             .ticketId(ticketId)
             .amount(BigDecimal.valueOf(100.0))
-            .method(PaymentMethod.KAKAOPAY)
+            .method(PaymentMethod.KAKAO_PAY)
             .status(PaymentStatus.OPENED)
             .build();
 
         // paymentId를 리플렉션으로 설정
         UUID generatedPaymentId = UUID.randomUUID();
         ReflectionUtils.setField(payment, "paymentId", generatedPaymentId);
+
+        // 결제 준비 응답
+        readyResponse = new ReadyResponse();
+        readyResponse.setTid("T123456789");
+        readyResponse.setNext_redirect_pc_url("http://redirect-url");
+
+        // 결제 승인 응답
+        approveResponse = new ApproveResponse();
+        approveResponse.setTid("T123456789");
+        approveResponse.setAid("A123456789");
     }
 
     @Test
-    void 결제_생성_성공() {
+    void 결제_요청_성공() {
         // 결제 요청 DTO 생성
         PaymentRequestDTO requestDTO = new PaymentRequestDTO(
             userId,
             ticketId,
-            PaymentMethod.KAKAOPAY,
+            PaymentMethod.KAKAO_PAY,
             100L
         );
 
-        // save() 메소드 모킹
+        // 실제로 payReady 호출 시 사용되는 인자 값과 일치하도록 Mock 설정
+        when(paymentProcessorFactory.getPaymentProcessor(PaymentMethod.KAKAO_PAY))
+            .thenReturn(paymentProcessor);
+        when(paymentProcessor.payReady(eq("1"), eq(BigDecimal.valueOf(100L)), any(UUID.class), isNull()))
+            .thenReturn(readyResponse); // 인자값을 eq()와 any()로 명시적으로 지정
+
+        // 결제 객체 저장 로직 Mock
         when(paymentRepository.save(any(Payment.class))).thenReturn(payment);
 
-        // 결제 생성 로직 실행
-        PaymentResponseDTO response = paymentService.createPayment(requestDTO);
+        // 결제 요청 실행
+        ReadyResponse response = paymentService.createPayment(requestDTO);
 
-        // save() 메서드 호출 여부 검증
-        verify(paymentRepository, times(1)).save(any(Payment.class));  // 메서드 호출 확인
+        // 응답 검증
+        assertNotNull(response);
+        assertEquals("T123456789", response.getTid());
+        assertEquals("http://redirect-url", response.getNext_redirect_pc_url());
+
+        // 결제가 저장되었는지 확인
+        verify(paymentRepository, times(2)).save(any(Payment.class));  // 한 번은 생성, 한 번은 TID 저장 시
+        verify(paymentProcessor, times(1)).payReady(eq("1"), eq(BigDecimal.valueOf(100L)), any(UUID.class), isNull());
     }
+
+
+    @Test
+    void 결제_승인_성공() {
+        // 결제 상태를 PENDING으로 설정
+        payment.updateStatus(PaymentStatus.PENDING);
+
+        // TID 값을 설정
+        payment.setTid("T123456789");
+
+        // 결제 상태가 PENDING인 결제를 찾는 부분 Mock 처리
+        when(paymentRepository.findById(payment.getPaymentId())).thenReturn(Optional.of(payment));
+
+        // 결제 승인 처리 (payApprove 호출 인자 값 정확하게 설정)
+        when(paymentProcessorFactory.getPaymentProcessor(PaymentMethod.KAKAO_PAY))
+            .thenReturn(paymentProcessor);
+        when(paymentProcessor.payApprove(eq("T123456789"), eq("pgTokenSample")))
+            .thenReturn(approveResponse);
+
+        // 결제 승인 실행
+        PaymentResponseDTO response = paymentService.approvePayment(payment.getPaymentId(), "pgTokenSample");
+
+        // 결제 승인 결과 확인
+        assertNotNull(response);
+        assertEquals(PaymentStatus.COMPLETED, payment.getStatus());
+
+        // 결제 저장 확인
+        verify(paymentRepository, times(1)).save(any(Payment.class));  // 승인 후 두 번 저장
+        verify(paymentProcessor, times(1)).payApprove(eq("T123456789"), eq("pgTokenSample"));
+    }
+
+
+
 
     @Test
     void 결제_단건_조회_성공() throws AccessDeniedException {

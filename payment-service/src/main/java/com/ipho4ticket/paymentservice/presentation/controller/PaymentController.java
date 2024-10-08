@@ -1,5 +1,6 @@
 package com.ipho4ticket.paymentservice.presentation.controller;
 
+import com.ipho4ticket.paymentservice.application.dto.ReadyResponse;
 import com.ipho4ticket.paymentservice.application.service.PaymentService;
 import com.ipho4ticket.paymentservice.presentation.request.PaymentRequestDTO;
 import com.ipho4ticket.paymentservice.presentation.response.PaymentResponseDTO;
@@ -10,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,11 +31,31 @@ public class PaymentController {
 
     // 1. 결제 등록 (POST)
     @PostMapping
-    public ResponseEntity<PaymentResponseDTO> createPayment(
-        @RequestBody PaymentRequestDTO request) {
-        PaymentResponseDTO payment = paymentService.createPayment(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(payment);
+    public ResponseEntity<Map<String, String>> createPayment(@RequestBody PaymentRequestDTO request) {
+        // 결제 생성 및 카카오페이 결제 준비
+        ReadyResponse readyResponse = paymentService.createPayment(request);
+
+        // 결제 준비 완료 후, 카카오페이 결제 페이지로 리다이렉트 -> 프론트 구현 시 해당 방법으로 변경
+        // 결제 준비 완료 후, 리다이렉트 URL을 JSON 응답으로 반환
+        return ResponseEntity.ok()
+            .body(Map.of("redirect_url", readyResponse.getNext_redirect_pc_url()));
+
     }
+
+    // 결제 승인 요청을 처리하는 메소드
+    @GetMapping("/approve")
+    public ResponseEntity<PaymentResponseDTO> approvePayment(
+        @RequestParam("payment_id") UUID paymentId,
+        @RequestParam("pg_token") String pgToken
+        ) {
+
+        // 결제 승인 로직 호출
+        PaymentResponseDTO paymentResponse = paymentService.approvePayment(paymentId, pgToken);
+
+        // 승인 완료된 결제 정보를 반환
+        return ResponseEntity.ok(paymentResponse);
+    }
+
 
     // 2. 결제 내역 단건 조회 (GET)
     @GetMapping("/{payment_id}")

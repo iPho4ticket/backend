@@ -3,6 +3,7 @@ package com.ipho4ticket.seatservice.application.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ipho4ticket.clienteventfeign.ClientEventFeign;
 import com.ipho4ticket.clienteventfeign.dto.EventResponseDto;
+import com.ipho4ticket.seatservice.application.events.TicketMakingEvent;
 import com.ipho4ticket.seatservice.domain.model.Seat;
 import com.ipho4ticket.seatservice.domain.model.SeatStatus;
 import com.ipho4ticket.seatservice.domain.repository.SeatRepository;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -32,6 +34,7 @@ public class SeatService {
     private final RedisTemplate<String,Object> redisTemplate;
     private final ObjectMapper objectMapper;
     private final ClientEventFeign clientEventFeign;
+    private final EventProducer eventService;
 
     @Transactional
     public SeatResponseDto createSeat(@Valid SeatRequestDto request) {
@@ -109,6 +112,32 @@ public class SeatService {
         cacheSeats(seatResponseDtos);
 
         return (SeatResponseDto) redisTemplate.opsForValue().get(seatId);
+    }
+
+    @SneakyThrows
+    @Transactional
+    public SeatResponseDto makeTicket(UUID seatId) {
+        // Redis에서 좌석 데이터 조회
+        String cacheKey = "seat::" + seatId; // 캐시 키 설정
+        Object cachedSeat = redisTemplate.opsForValue().get(cacheKey);
+
+        // 좌석 데이터를 캐시에서 가져오거나 DB에서 조회
+        Seat seat = Optional.ofNullable(cachedSeat)
+                .map(seatObj -> objectMapper.convertValue(seatObj, Seat.class)) // 캐시에서 가져온 데이터를 Seat 객체로 변환
+                .orElseGet(() -> seatRepository.findById(seatId)
+                        .orElseThrow(() -> new IllegalArgumentException(seatId + "는 찾을 수 없는 좌석입니다.")));
+
+        // 좌석 상태가 AVAILABLE인지 확인 후 처리
+        if (!seat.getStatus().equals(SeatStatus.AVAILABLE)) {
+            throw new IllegalStateException(seatId + "는 이미 예약된 좌석입니다.");
+        }
+
+        seat.updateStatus(SeatStatus.RESERVED); // 좌석 상태 업데이트
+        seatRepository.save(seat); // 상태 업데이트 후 좌석 저장
+        eventService.publishTicketMakingEvent(new TicketMakingEvent(seat.getId(),seat.getSeatNumber(),seat.getPrice())); // 이벤트 발행
+
+        // 좌석 데이터를 응답 DTO로 변환하여 반환
+        return toResponseDTO(seat);
     }
 
     @Transactional

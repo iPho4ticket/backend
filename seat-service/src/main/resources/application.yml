@@ -1,17 +1,20 @@
 spring:
   application:
     name: seat-service
+
   datasource:
     url: jdbc:postgresql://localhost:5432/postgres
     username: postgres
     password: 1234
     driver-class-name: org.postgresql.Driver
+
   data:
     redis:
       host: localhost
       port: 6379
       username: default
       password: systempass
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -21,5 +24,16 @@ spring:
         show-sql: true
         format_sql: true
         highlight_sql: true
-server:
-  port: 19091
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: ${spring.application.name}-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer

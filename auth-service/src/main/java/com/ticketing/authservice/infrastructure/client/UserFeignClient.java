@@ -22,7 +22,7 @@ public interface UserFeignClient {
 	 * @param create 생성할 사용자 정보가 담긴 DTO
 	 * @return 생성된 사용자 정보가 담긴 UserDto.Result 객체
 	 */
-	@PostMapping("/internal/users")
+	@PostMapping("/api/v1/internal/users")
 	UserDto.Result createUser(@RequestBody UserDto.Create create);
 
 	/**
@@ -31,6 +31,6 @@ public interface UserFeignClient {
 	 * @param email 조회할 사용자 이메일
 	 * @return 조회된 사용자 정보가 담긴 UserDto.Result 객체
 	 */
-	@GetMapping("/internal/users")
+	@GetMapping("/api/v1/internal/users")
 	UserDto.Auth.Result readUserByEmail(@RequestParam("email") String email);
 }

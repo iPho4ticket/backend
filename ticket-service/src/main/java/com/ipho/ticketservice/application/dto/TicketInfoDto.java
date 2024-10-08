@@ -10,6 +10,7 @@ public record TicketInfoDto(UUID ticketId,
                             String seatNumber,
                             String status,
                             String reservationTime,
+                            String expirationTime,
                             Double price,
                             String message) {
 
@@ -21,6 +22,7 @@ public record TicketInfoDto(UUID ticketId,
                 ticket.getSeatNumber(),
                 ticket.getStatus().toString(),
                 ticket.getReservationTime().toString(),
+                ticket.getExpirationTime().toString(),
                 ticket.getPrice(),
                 "Ticket details retrieved successfully.");
     }

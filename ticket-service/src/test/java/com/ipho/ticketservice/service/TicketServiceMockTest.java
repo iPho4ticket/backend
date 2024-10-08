@@ -1,11 +1,12 @@
-package com.ipho.ticketservice;
+package com.ipho.ticketservice.service;
 
 import com.ipho.ticketservice.application.dto.TicketInfoDto;
+import com.ipho.ticketservice.infrastructure.client.ValidationResponse;
 import com.ipho.ticketservice.presentation.request.TicketRequestDto;
 import com.ipho.ticketservice.presentation.response.TicketResponseDto;
-import com.ipho.ticketservice.application.event.CancelTicketEvent;
-import com.ipho.ticketservice.application.event.SeatBookingEvent;
-import com.ipho.ticketservice.application.service.EventService;
+import com.ipho.ticketservice.application.event.dto.CancelTicketEvent;
+import com.ipho.ticketservice.application.event.dto.SeatBookingEvent;
+import com.ipho.ticketservice.application.event.service.EventProducer;
 import com.ipho.ticketservice.application.service.TicketService;
 import com.ipho.ticketservice.domain.model.Ticket;
 import com.ipho.ticketservice.domain.repository.TicketRepository;
@@ -26,17 +27,17 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class TicketServiceTest {
+public class TicketServiceMockTest {
 
     @Autowired
     private TicketService ticketService;
     private TicketRepository ticketRepository;
-    private EventService eventService;
+    private EventProducer eventService;
 
     @BeforeEach
     void setUp() {
         ticketRepository = mock(TicketRepository.class);
-        eventService = mock(EventService.class);
+        eventService = mock(EventProducer.class);
         ticketService = new TicketService(ticketRepository, eventService);
     }
 
@@ -81,6 +82,49 @@ public class TicketServiceTest {
         verify(eventService, times(1)).publishCancelTicket(any(CancelTicketEvent.class));
     }
 
+    @Test
+    @DisplayName("내부 API - 유효한 티켓 검증 ( Success Case )")
+    void validTicket_Success() {
+        Ticket ticket = new Ticket(1L, UUID.randomUUID(), "A1", 10000.0);
+        ticket.pending();
+        when(ticketRepository.findByValidationTicket(ticket.getUuid(), TicketStatus.PENDING)).thenReturn(Optional.of(ticket));
+
+        ValidationResponse validationResponse = ticketService.validateTicket(ticket.getUuid(), 1L);
+
+        assertNotNull(validationResponse);
+        assertTrue(validationResponse.success());
+        assertEquals(validationResponse.message(), "valid ticket");
+    }
+
+
+
+    @Test
+    @DisplayName("내부 API - 유효한 티켓 검증 ( Failure Case 1. not pending )")
+    void validTicket_Failure_NotPending() {
+        Ticket ticket = new Ticket(1L, UUID.randomUUID(), "A1", 10000.0);
+
+        when(ticketRepository.findByValidationTicket(ticket.getUuid(), TicketStatus.PENDING)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            ticketService.validateTicket(ticket.getUuid(), 1L);
+        });
+        assertEquals(exception.getMessage(), "not processing ticket");
+    }
+
+    @Test
+    @DisplayName("내부 API - 유효한 티켓 검증 ( Failure Case 2. no authority userId ")
+    void validTicket_Failure_NoAuthorityUserId() {
+        Ticket ticket = new Ticket(1L, UUID.randomUUID(), "A1", 10000.0);
+        ticket.pending();
+
+        when(ticketRepository.findByValidationTicket(ticket.getUuid(), TicketStatus.PENDING)).thenReturn(Optional.of(ticket));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            ticketService.validateTicket(ticket.getUuid(), 2L);
+        });
+        assertEquals(exception.getMessage(), "no authority userId");
+        System.out.println("exception = " + exception.getMessage());
+    }
     
     
     

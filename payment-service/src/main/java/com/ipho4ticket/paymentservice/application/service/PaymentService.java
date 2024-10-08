@@ -1,8 +1,12 @@
 package com.ipho4ticket.paymentservice.application.service;
 
+import com.ipho4ticket.paymentservice.application.dto.ApproveResponse;
+import com.ipho4ticket.paymentservice.application.dto.ReadyResponse;
+import com.ipho4ticket.paymentservice.application.factory.PaymentProcessorFactory;
 import com.ipho4ticket.paymentservice.domain.model.Payment;
 import com.ipho4ticket.paymentservice.domain.model.PaymentStatus;
 import com.ipho4ticket.paymentservice.domain.repository.PaymentRepository;
+import com.ipho4ticket.paymentservice.domain.service.PaymentProcessor;
 import com.ipho4ticket.paymentservice.presentation.request.PaymentRequestDTO;
 import com.ipho4ticket.paymentservice.presentation.response.PaymentResponseDTO;
 import jakarta.transaction.Transactional;
@@ -21,9 +25,11 @@ public class PaymentService {
     // TODO: Exception 공통 모듈 이후 전체적으로 수정
 
     private final PaymentRepository paymentRepository;
-
+    private final PaymentProcessorFactory paymentProcessorFactory;
     @Transactional
-    public PaymentResponseDTO createPayment(PaymentRequestDTO request) {
+    public ReadyResponse createPayment(PaymentRequestDTO request) {
+        PaymentProcessor processor = paymentProcessorFactory.getPaymentProcessor(request.paymentMethod());
+
         // 1. ticketId와 userId를 통해 티켓 유효성 검사(추후 외부 API를 통해 검증)
 
         // 2. 결제 생성
@@ -44,16 +50,63 @@ public class PaymentService {
 
         // 3. 외부 결제 API를 통한 결제 시행 / ex) 카카오페이 결제 모듈
 
-        // 4. 외부 결제 성공 이후 결제 상태 변경
-        payment.updateStatus(PaymentStatus.COMPLETED);
+        try {
+            // 3. 외부 결제 API 호출 (카카오페이, PayPal 등)
+            ReadyResponse readyResponse = processor.payReady("1", payment.getAmount(), request.ticketId(), payment.getPaymentId());
 
-        // 5. 티켓 상태 변경(추후 외부 API를 통해 진행)
+            // 외부 결제가 성공적으로 준비된 경우, TID 저장 및 상태 업데이트
+            payment.setTid(readyResponse.getTid());
+            payment.updateStatus(PaymentStatus.PENDING); // 결제 준비 상태로 변경
+            paymentRepository.save(payment);
 
-        return toResponseDTO(payment);
+            return readyResponse;
+
+        } catch (Exception e) {
+            // 결제 준비 실패 시, 결제 상태를 실패로 업데이트
+            payment.updateStatus(PaymentStatus.FAILED);
+            paymentRepository.save(payment);
+            throw new IllegalArgumentException("결제 준비 실패: " + e.getMessage());
+        }
+
     }
 
+    @Transactional
+    public PaymentResponseDTO approvePayment(UUID paymentId, String pgToken) {
+        Payment payment = paymentRepository.findById(paymentId)
+            .orElseThrow(() -> new IllegalArgumentException("Payment not found"));
+
+        if (!PaymentStatus.PENDING.equals(payment.getStatus())) {
+            throw new IllegalStateException("결제가 대기 상태여야 합니다.");
+        }
+
+        try {
+            // 3. 외부 결제 승인 API 호출
+            PaymentProcessor processor = paymentProcessorFactory.getPaymentProcessor(payment.getMethod());
+            ApproveResponse approveResponse = processor.payApprove(payment.getTid(), pgToken);
+
+            // 승인 성공 시 결제 상태를 완료로 변경
+            payment.updateStatus(PaymentStatus.COMPLETED);
+            paymentRepository.save(payment);
+
+            // 티켓 상태 업데이트 (추후 외부 API 통해 처리 가능)
+            // updateTicketStatus(payment.getTicketId());
+
+            return toResponseDTO(payment);
+
+        } catch (Exception e) {
+            // 결제 승인 실패 시 상태를 실패로 업데이트
+            payment.updateStatus(PaymentStatus.FAILED);
+            paymentRepository.save(payment);
+            throw new IllegalArgumentException("결제 승인 실패: " + e.getMessage());
+        }
+    }
+
+
+
+
     // 2. 결제 단건 조회
-    public PaymentResponseDTO getPayment(UUID paymentId, Long currentUserId) throws AccessDeniedException {
+    public PaymentResponseDTO getPayment(UUID paymentId, Long currentUserId)
+        throws AccessDeniedException {
         Payment payment = findPaymentAndCheckPermission(paymentId, currentUserId);
         return toResponseDTO(payment);
     }
@@ -66,14 +119,16 @@ public class PaymentService {
 
     // 4. 결제 내역 검색
     @Transactional
-    public Page<PaymentResponseDTO> searchPayments(Map<String, String> searchParams, Pageable pageable) {
+    public Page<PaymentResponseDTO> searchPayments(Map<String, String> searchParams,
+        Pageable pageable) {
         Page<Payment> payments = paymentRepository.searchWithParams(searchParams, pageable);
         return payments.map(this::toResponseDTO);
     }
 
     // 5. 결제 취소
     @Transactional
-    public PaymentResponseDTO cancelPayment(UUID paymentId, Long userId) throws AccessDeniedException {
+    public PaymentResponseDTO cancelPayment(UUID paymentId, Long userId)
+        throws AccessDeniedException {
         Payment payment = findPaymentAndCheckPermission(paymentId, userId);
         checkPaymentStatus(payment, PaymentStatus.COMPLETED);
         updatePaymentStatus(payment, PaymentStatus.CANCELED);
@@ -93,7 +148,8 @@ public class PaymentService {
     }
 
     // Helper method to find a Payment and check user permissions
-    private Payment findPaymentAndCheckPermission(UUID paymentId, Long currentUserId) throws AccessDeniedException {
+    private Payment findPaymentAndCheckPermission(UUID paymentId, Long currentUserId)
+        throws AccessDeniedException {
         Payment payment = paymentRepository.findById(paymentId)
             .orElseThrow(() -> new IllegalArgumentException("Payment not found"));
 
@@ -113,7 +169,8 @@ public class PaymentService {
     // Helper method to check payment status
     private void checkPaymentStatus(Payment payment, PaymentStatus expectedStatus) {
         if (!payment.getStatus().equals(expectedStatus)) {
-            throw new IllegalStateException("Payment status must be " + expectedStatus + " to perform this action");
+            throw new IllegalStateException(
+                "Payment status must be " + expectedStatus + " to perform this action");
         }
     }
 

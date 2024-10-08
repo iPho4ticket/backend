@@ -33,6 +33,9 @@ public class Payment {
     @Column(name= "ticket_id", nullable = false)
     private UUID ticketId; // 티켓 ID (외부 테이블 ticket과 연관)
 
+    @Column(name = "tid")
+    private String tid;
+
     @Column(name = "amount", precision = 10, scale = 2, nullable = false)
     private BigDecimal amount; // 결제 금액
 
@@ -59,5 +62,9 @@ public class Payment {
 
     public void updateStatus(PaymentStatus paymentStatus) {
         this.status = paymentStatus;
+    }
+
+    public void setTid(String tid) {
+        this.tid = tid;
     }
 }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ipho4ticket.clienteventfeign.ClientEventFeign;
 import com.ipho4ticket.clienteventfeign.dto.EventResponseDto;
 import com.ipho4ticket.seatservice.application.dto.SeatResponseDto;
+import com.ipho4ticket.seatservice.application.service.EventProducer;
 import com.ipho4ticket.seatservice.application.service.SeatService;
 import com.ipho4ticket.seatservice.domain.model.Seat;
 import com.ipho4ticket.seatservice.domain.model.SeatStatus;
@@ -43,6 +44,9 @@ class SeatServiceTest {
 
     @Mock
     private ClientEventFeign clientEventFeign;
+
+    @Mock
+    private EventProducer eventProducer;
 
     @InjectMocks
     private SeatService seatService;
@@ -176,5 +180,33 @@ class SeatServiceTest {
         assertEquals(seatId + "는 찾을 수 없는 좌석입니다.", exception.getMessage());
 
         verify(seatRepository, never()).delete(any(Seat.class));
+    }
+
+    @Test
+    void testChangeSeatToSold() {
+        ValueOperations<String, Object> valueOps = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+
+        Seat seat = createSeatFromRequest(seatId, request, SeatStatus.RESERVED);
+        when(seatRepository.findById(seatId)).thenReturn(Optional.of(seat));
+
+        seatService.ChangeSeatToSold(seatId);
+
+        assertEquals(SeatStatus.SOLD, seat.getStatus());
+        verify(seatRepository, times(1)).save(seat);
+    }
+
+    @Test
+    void testChangeSeatToAvailable() {
+        ValueOperations<String, Object> valueOps = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+
+        Seat seat = createSeatFromRequest(seatId, request, SeatStatus.RESERVED);
+        when(seatRepository.findById(seatId)).thenReturn(Optional.of(seat));
+
+        seatService.ChangeSeatToAvailable(seatId);
+
+        assertEquals(SeatStatus.AVAILABLE, seat.getStatus());
+        verify(seatRepository, times(1)).save(seat);
     }
 }

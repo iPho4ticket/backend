@@ -4,13 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CancelPaymentEvent {
-    // 변경 필요
-    private UUID ticketId;
-    private UUID seatId;
+public class NoticePaymentEvent {
+    String message;
 }

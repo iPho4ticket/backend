@@ -1,5 +1,6 @@
 package com.ipho4ticket.seatservice.application.service;
 
+import com.ipho4ticket.seatservice.application.events.NoticePaymentEvent;
 import com.ipho4ticket.seatservice.application.events.TicketMakingEvent;
 import com.ipho4ticket.seatservice.infra.messaging.EventSerializer;
 import lombok.RequiredArgsConstructor;
@@ -13,5 +14,9 @@ public class EventProducer {
 
     public void publishTicketMakingEvent(TicketMakingEvent event) {
         kafkaTemplate.send("ticket-making", EventSerializer.serialize(event));
+    }
+
+    public void publishNoticePaymentEvent(NoticePaymentEvent event){
+        kafkaTemplate.send("notice-payment",EventSerializer.serialize(event));
     }
 }

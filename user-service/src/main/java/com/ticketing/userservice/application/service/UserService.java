@@ -25,7 +25,7 @@ public class UserService {
 	private final RepositoryHelper<User, Long> repositoryHelper;
 
 	/**
-	 * 새로운 유저을 생성하는 메서드
+	 * 새로운 유저를 생성하는 메서드
 	 *
 	 * @param createDto 유저 생성 정보
 	 * @return 생성된 유저 결과
@@ -48,7 +48,7 @@ public class UserService {
 	}
 
 	/**
-	 * 모든 유저을 조회하는 내부 메서드 (관리자용)
+	 * 모든 유저를 조회하는 내부 메서드 (관리자용)
 	 *
 	 * @param pageable 페이징 정보
 	 * @return 페이징된 유저 결과
@@ -58,7 +58,7 @@ public class UserService {
 	}
 
 	/**
-	 * 유저을 삭제하는 메서드
+	 * 유저를 삭제하는 메서드
 	 *
 	 * @param id 삭제할 유저의 ID
 	 */

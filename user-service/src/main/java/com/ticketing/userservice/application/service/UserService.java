@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ticketing.userservice.application.dto.UserDto;
 import com.ticketing.userservice.domain.User;
 import com.ticketing.userservice.domain.repository.UserRepository;
 import com.ticketing.userservice.domain.repository.helper.RepositoryHelper;
@@ -79,5 +80,15 @@ public class UserService {
 		User user = repositoryHelper.findOrThrowNotFound(deleteDto.id());
 		user.softDelete(deleteDto.deleterId());
 		return deleteDtoFrom(user);
+	}
+
+	/**
+	 * 이메일로 유저를 조회하는 메서드
+	 *
+	 * @param email 조회할 유저의 이메일
+	 * @return 유저 인증 정보 결과
+	 */
+	public UserDto.Auth.Result readUserByEmail(String email) {
+		return authDtoFrom(userRepository.findByEmail(email));
 	}
 }

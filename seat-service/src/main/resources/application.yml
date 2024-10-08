@@ -14,6 +14,8 @@ spring:
       port: 6379
       username: default
       password: systempass
+      connect-timeout: 3000
+      timeout: 3000
 
   jpa:
     hibernate:

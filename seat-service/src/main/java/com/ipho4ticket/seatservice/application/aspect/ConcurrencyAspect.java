@@ -24,8 +24,8 @@ public class ConcurrencyAspect {
     private final RedissonClient redissonClient;
     private final TransactionAspect transactionAspect;
 
-    @Around("@annotation(com.backoffice.upjuyanolja.global.concurrency.annotation.ConcurrencyControl)&&args(targetId)")
-    public Object handleConcurrency(ProceedingJoinPoint joinPoint, Long targetId) throws Throwable {
+    @Around("@annotation(com.ipho4ticket.seatservice.application.config.ConcurrencyControl) && args(targetId)")
+    public Object around(ProceedingJoinPoint joinPoint, Long targetId) throws Throwable {
         Object result;
 
         // Get annotation

@@ -1,0 +1,36 @@
+server:
+  port: ${GATEWAY_PORT}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${ACTUATOR_ENDPOINTS}
+  endpoint:
+    health:
+      show-details: ${SHOW_HEALTH_DETAILS}
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URI}
+          predicates:
+            - Path=api/v1/auth/**
+        - id: internal-service
+          uri: ${INTERNAL_SERVICE_URI}
+          predicates:
+            - Path=api/v1/internal/**
+          filters:
+            - name: DenyAccessGatewayFilter  # 사용자 정의 필터
+
+# WebClient를 통해 호출하는 auth-service 설정
+auth-service:
+  name: ${AUTH_SERVICE_NAME}  # internal 호출용 WebClient에서 참조할 서비스 이름
+  url: ${AUTH_SERVICE_INTERNAL_URL}  # internal 호출용 URL
+
+cache:
+  caffeine:
+    expiration: ${CACHE_EXPIRATION}  # 캐시 만료 시간 (초 단위)
+    max-size: ${CACHE_MAX_SIZE}      # 캐시 최대 크기

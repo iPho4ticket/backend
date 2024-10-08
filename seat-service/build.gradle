@@ -12,9 +12,21 @@ plugins {
 
 dependencies {
 	implementation project(':common')
+	implementation project(':client-event-feign')
+
+	// Feign
+	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+	// implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
 
 	// aop
 	implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+	// kafka
+	implementation 'org.springframework.kafka:spring-kafka'
+
+	// redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
 
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	compileOnly 'org.projectlombok:lombok'
@@ -23,9 +35,6 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	implementation 'org.postgresql:postgresql'
-
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 }
 

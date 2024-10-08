@@ -37,20 +37,19 @@ public class Event{
     @Column(nullable=false,name="end_time")
     private LocalDateTime endTime;
 
-    public static Event create (EventRequestDto request) {
-        return Event.builder()
-                .title(request.title())
-                .description(request.title())
-                .date(request.date())
-                .startTime(request.startTime())
-                .endTime(request.endTime())
-                .build();
+    public Event(String title, String description, LocalDate date, LocalDateTime startTime, LocalDateTime endTime) {
+        this.title=title;
+        this.description=description;
+        this.date=date;
+        this.startTime=startTime;
+        this.endTime=endTime;
     }
-    public void update(EventRequestDto request){
-        this.title = request.title();
-        this.description = request.description();
-        this.date = request.date();
-        this.startTime = request.startTime();
-        this.endTime = request.endTime();
+
+    public void update(String title, String description, LocalDate date, LocalDateTime startTime, LocalDateTime endTime){
+        this.title = title;
+        this.description = description;
+        this.date = date;
+        this.startTime = startTime;
+        this.endTime = endTime;
     }
 }

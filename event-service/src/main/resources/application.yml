@@ -14,3 +14,5 @@ spring:
         show-sql: true
         format_sql: true
         highlight_sql: true
+server:
+  port: 19090

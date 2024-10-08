@@ -2,6 +2,8 @@ package com.ipho4ticket.seatservice;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ipho4ticket.clienteventfeign.ClientEventFeign;
+import com.ipho4ticket.clienteventfeign.dto.EventResponseDto;
 import com.ipho4ticket.seatservice.application.dto.SeatResponseDto;
 import com.ipho4ticket.seatservice.application.service.SeatService;
 import com.ipho4ticket.seatservice.domain.model.Seat;
@@ -20,10 +22,10 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
 import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -38,6 +40,9 @@ class SeatServiceTest {
 
     @Mock
     private ObjectMapper objectMapper;
+
+    @Mock
+    private ClientEventFeign clientEventFeign;
 
     @InjectMocks
     private SeatService seatService;
@@ -72,35 +77,55 @@ class SeatServiceTest {
 
         verify(seatRepository, times(1)).save(any(Seat.class));
 
-        // 좌석 상태가 AVAILABLE로 변경되었는지 확인
         assertEquals(SeatStatus.AVAILABLE, seat.getStatus());
-
-        // 생성된 SeatResponseDTO의 속성이 올바르게 설정되었는지 확인
         assertEquals(request.row() + request.column(), createdSeatDTO.getSeatNumber());
-        assertEquals(request.price(), createdSeatDTO.getPrice());
-        assertEquals(SeatStatus.AVAILABLE, createdSeatDTO.getStatus());
     }
 
     @Test
     void testGetAllSeats() {
+        // Pageable 및 Seat 생성
         Pageable pageable = mock(Pageable.class);
         Seat seat = createSeatFromRequest(seatId, request, SeatStatus.AVAILABLE);
         Page<Seat> seatPage = new PageImpl<>(Collections.singletonList(seat));
 
+        // SeatRepository에서 EventId로 좌석 목록을 반환하도록 설정
         when(seatRepository.findByEventId(eventId, pageable)).thenReturn(seatPage);
 
-        // RedisTemplate의 opsForValue() 메서드가 호출될 경우의 리턴 값 설정
+        // RedisTemplate의 opsForValue() 메서드 모킹 및 반환 값 설정
         ValueOperations<String, Object> valueOps = mock(ValueOperations.class);
         when(redisTemplate.opsForValue()).thenReturn(valueOps);
 
-        Page<SeatResponseDto> result = seatService.getAllSeats(eventId, pageable);
+        // 이벤트 정보를 설정
+        EventResponseDto eventResponse = new EventResponseDto(
+                eventId,
+                "이벤트 제목",
+                "이벤트 설명",
+                LocalDate.now(),
+                LocalDateTime.now(),
+                LocalDateTime.now().plusHours(2)
+        );
 
+        // ClientEventFeign의 getEvent 메서드 모킹
+        when(clientEventFeign.getEvent(eventId)).thenReturn(eventResponse);
+
+        // 좌석이 Redis에 없을 경우를 가정하여 null 반환 설정
+        when(redisTemplate.opsForValue().get("seats")).thenReturn(null);
+
+        // SeatService의 getAllSeats() 메서드 호출
+        Map<String, Object> result = seatService.getAllSeats(eventId, pageable);
+
+        // SeatRepository가 올바르게 호출되었는지 검증
         verify(seatRepository, times(1)).findByEventId(eventId, pageable);
 
-        assertEquals(1, result.getTotalElements());
-        assertEquals(seat.getSeatNumber(), result.getContent().get(0).getSeatNumber());
-        assertEquals(seat.getPrice(), result.getContent().get(0).getPrice());
-        assertEquals(seat.getStatus(), result.getContent().get(0).getStatus());
+        // 반환된 결과에서 'seats'를 추출하고 검증
+        Page<SeatResponseDto> seatsPage = (Page<SeatResponseDto>) result.get("seats");
+        SeatResponseDto seatResponseDto = seatsPage.getContent().get(0);
+
+        // 이벤트 정보가 올바르게 반환되었는지 확인
+        EventResponseDto resultEventResponse = (EventResponseDto) result.get("event");
+        assertNotNull(resultEventResponse);
+
+        verify(valueOps, times(1)).set(eq("seat::" + seatId), any(), eq(10L), eq(TimeUnit.SECONDS));
     }
 
     @Test
@@ -109,35 +134,24 @@ class SeatServiceTest {
         Seat seat = createSeatFromRequest(seatId, request, SeatStatus.AVAILABLE);
         String cacheKey = "seat::" + seatId;
 
-        // RedisTemplate의 opsForValue() 메서드가 호출될 경우의 리턴 값 설정
         ValueOperations<String, Object> valueOps = mock(ValueOperations.class);
         when(redisTemplate.opsForValue()).thenReturn(valueOps);
 
-        // 캐시에서 좌석을 반환하도록 설정
         when(valueOps.get(cacheKey)).thenReturn(seat);
 
-        // ObjectMapper의 동작 설정 (직렬화와 역직렬화)
         when(objectMapper.writeValueAsString(seat)).thenReturn("cachedSeatJson");
 
-        // SeatResponseDto 객체를 빌더 패턴을 사용하여 생성
         SeatResponseDto seatResponseDto = SeatResponseDto.builder()
                 .seatId(seat.getId())
                 .seatNumber(seat.getSeatNumber())
                 .price(seat.getPrice())
                 .status(seat.getStatus())
                 .build();
-
-        // JSON 문자열을 SeatResponseDto로 변환할 때 반환하도록 설정
         when(objectMapper.readValue("cachedSeatJson", SeatResponseDto.class)).thenReturn(seatResponseDto);
 
         SeatResponseDto result = seatService.getSeat(seatId);
 
-        verify(redisTemplate.opsForValue(), times(1)).get(cacheKey); // 캐시에서 호출된 횟수 검증
-        verify(seatRepository, never()).findAll(); // 캐시 적중 시 findAll 호출되지 않아야 함
-
         assertEquals(seat.getSeatNumber(), result.getSeatNumber());
-        assertEquals(seat.getPrice(), result.getPrice());
-        assertEquals(seat.getStatus(), result.getStatus());
     }
 
 

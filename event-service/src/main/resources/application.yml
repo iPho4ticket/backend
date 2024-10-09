@@ -1,18 +1,19 @@
 spring:
   application:
     name: event-service
+  jpa:
+    hibernate:
+      ddl-auto: update  # 데이터베이스 스키마를 자동으로 업데이트
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        use_sql_comments: true
   datasource:
     url: jdbc:postgresql://localhost:5432/postgres
     username: postgres
     password: 1234
     driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        show-sql: true
-        format_sql: true
-        highlight_sql: true
+
 server:
   port: 19090

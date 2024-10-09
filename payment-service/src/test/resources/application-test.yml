@@ -9,7 +9,7 @@ spring:
       hibernate.default_batch_fetch_size: 100
 
 ---
-spring.config.activate.on-profile: local
+spring.config.activate.on-profile: test
 
 spring:
   jpa:
@@ -35,8 +35,8 @@ storage:
 
 kakao:
   pay:
-    secret-key: ${KAKAO_PAY_SECRET_KEY}
+    secret-key: test_secret_key
 
 ticket:
   api:
-    url: ${TICKET_API_URL}
+    url: localhost:19099

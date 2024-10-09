@@ -20,5 +20,5 @@ public interface ClientTicketFeign {
 
     // 결제 완료 이후 티켓 상태 변경
     @PostMapping("/api/v1/internal/ticket/{ticket_id}")
-    ValidationResponse changeTicketStatus(@PathVariable("ticket_id") Long ticketId);
+    ValidationResponse changeTicketStatus(@PathVariable("ticket_id") UUID ticketId);
 }

@@ -120,7 +120,7 @@ public class PaymentServiceTest {
 
 
     @Test
-    void 결제_승인_성공() {
+    void 결제_승인_성공_티켓_상태_변경_재시도_및_취소() {
         // 결제 상태를 PENDING으로 설정
         payment.updateStatus(PaymentStatus.PENDING);
 
@@ -136,8 +136,12 @@ public class PaymentServiceTest {
         when(paymentProcessor.payApprove(eq("T123456789"), eq("pgTokenSample")))
             .thenReturn(approveResponse);
 
+        // Mock the response of clientTicketFeign.changeTicketStatus to return a successful ValidationResponse
+        ValidationResponse validationResponse = new ValidationResponse(true, "Success");
+        when(clientTicketFeign.changeTicketStatus(ticketId)).thenReturn(validationResponse);
+
         // 결제 승인 실행
-        PaymentResponseDTO response = paymentService.approvePayment(payment.getPaymentId(), "pgTokenSample");
+        PaymentResponseDTO response = paymentService.approvePayment(payment.getPaymentId(), ticketId, "pgTokenSample");
 
         // 결제 승인 결과 확인
         assertNotNull(response);
@@ -146,7 +150,9 @@ public class PaymentServiceTest {
         // 결제 저장 확인
         verify(paymentRepository, times(1)).save(any(Payment.class));  // 승인 후 두 번 저장
         verify(paymentProcessor, times(1)).payApprove(eq("T123456789"), eq("pgTokenSample"));
+        verify(clientTicketFeign, times(1)).changeTicketStatus(ticketId);  // 티켓 상태 변경 호출 확인
     }
+
 
 
 

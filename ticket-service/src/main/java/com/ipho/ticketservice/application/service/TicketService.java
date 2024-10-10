@@ -3,6 +3,7 @@ package com.ipho.ticketservice.application.service;
 import com.ipho.ticketservice.application.dto.TicketInfoDto;
 import com.ipho.ticketservice.application.event.dto.CancelTicketEvent;
 import com.ipho.ticketservice.application.event.dto.SeatBookingEvent;
+import com.ipho.ticketservice.application.event.dto.TicketMakingEvent;
 import com.ipho.ticketservice.application.event.service.EventProducer;
 import com.ipho.ticketservice.domain.model.Ticket;
 import com.ipho.ticketservice.domain.model.TicketStatus;
@@ -27,7 +28,7 @@ public class TicketService {
     public TicketResponseDto reservationTicket(TicketRequestDto dto) {
         Ticket ticket = new Ticket(dto.userId(), dto.eventId(), dto.seatNumber(), dto.price());
         ticketRepository.save(ticket);
-        eventProducer.publishSeatBookingEvent(new SeatBookingEvent(dto.userId(), dto.eventId(), dto.seatNumber(), dto.price()));
+        eventProducer.publishSeatBookingEvent(new SeatBookingEvent(ticket.getUuid(), dto.userId(), dto.eventId(), dto.seatNumber(), dto.price()));
 
         return TicketResponseDto.createTicket(ticket);
     }
@@ -68,4 +69,9 @@ public class TicketService {
         return new ValidationResponse(true, "complete payment");
     }
 
+    @Transactional
+    public void ticketMaking(TicketMakingEvent event) {
+        Ticket ticket = ticketRepository.findByUuid(event.getTicketId()).orElseThrow(() -> new IllegalArgumentException("not found ticket by uuid"));
+        ticket.pending();
+    }
 }

@@ -83,7 +83,7 @@ public class TicketServiceTest {
         boolean messageConsumed = reservationLatch.await(10, TimeUnit.SECONDS);
         assertTrue(messageConsumed);
         SeatBookingEvent responseEvent = seatBookingEvent;
-        assertThat(responseEvent).isEqualTo(new SeatBookingEvent(requestDto.userId(), requestDto.eventId(), requestDto.seatNumber(), requestDto.price()));
+        assertThat(responseEvent).isEqualTo(new SeatBookingEvent(responseDto.ticketId(), requestDto.userId(), requestDto.eventId(), requestDto.seatNumber(), requestDto.price()));
 
         System.out.println("requestDto = " + requestDto);
         System.out.println("responseEvent = " + responseEvent);

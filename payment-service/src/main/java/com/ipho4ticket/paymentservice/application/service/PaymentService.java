@@ -78,8 +78,9 @@ public class PaymentService {
 
     }
 
-    @Transactional
-    public PaymentResponseDTO approvePayment(UUID paymentId, String pgToken) {
+    // TODO: 에러 처리 상세화 이후 dontRollbackOn 구분
+    @Transactional(dontRollbackOn = {IllegalArgumentException.class, IllegalStateException.class})
+    public PaymentResponseDTO approvePayment(UUID paymentId, UUID ticketId ,String pgToken) {
         Payment payment = paymentRepository.findById(paymentId)
             .orElseThrow(() -> new IllegalArgumentException("Payment not found"));
 
@@ -97,8 +98,15 @@ public class PaymentService {
             paymentRepository.save(payment);
 
             // 티켓 상태 업데이트 (추후 외부 API 통해 처리 가능)
-            // TODO: 시나리오 테스트 이후 카카오 결제 시에 requestParam에 ticket id 추가
+            ValidationResponse validationResponse = clientTicketFeign.changeTicketStatus(ticketId);
 
+            // 티켓 상태 실패 시
+            /*
+            TODO: 결제 성공 후 티켓 상태 변경 실패 시 리트라이 3번 이후 카카오페이 결제 취소 호출
+             */
+            if (!validationResponse.success()){
+                throw new IllegalStateException(validationResponse.message());
+            }
             return toResponseDTO(payment);
 
         } catch (Exception e) {

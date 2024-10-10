@@ -46,11 +46,12 @@ public class PaymentController {
     @GetMapping("/approve")
     public ResponseEntity<PaymentResponseDTO> approvePayment(
         @RequestParam("payment_id") UUID paymentId,
+        @RequestParam("ticket_id") UUID ticketId,
         @RequestParam("pg_token") String pgToken
         ) {
 
         // 결제 승인 로직 호출
-        PaymentResponseDTO paymentResponse = paymentService.approvePayment(paymentId, pgToken);
+        PaymentResponseDTO paymentResponse = paymentService.approvePayment(paymentId, ticketId, pgToken);
 
         // 승인 완료된 결제 정보를 반환
         return ResponseEntity.ok(paymentResponse);

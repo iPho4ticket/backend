@@ -41,6 +41,14 @@ public class AuthTokenFilter implements GlobalFilter {
 	 */
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+		String requestPath = exchange.getRequest().getURI().getPath();
+
+		// auth 관련 경로 회피 (로그인, 회원가입 등)
+		if (requestPath.startsWith("/api/v1/auth/")) {
+			log.info("Auth 관련 요청 - 토큰 검증 회피: {}", requestPath);
+			return chain.filter(exchange);  // 필터를 적용하지 않고 바로 다음 체인으로 이동
+		}
+
 		String authHeader = exchange.getRequest().getHeaders().getFirst(AUTHORIZATION);
 		if (!isValidBearerToken(authHeader))
 			return handleUnauthorized(exchange, "Authorization 헤더가 없거나 올바르지 않음.");

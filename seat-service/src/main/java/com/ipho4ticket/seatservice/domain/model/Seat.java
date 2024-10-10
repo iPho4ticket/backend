@@ -32,18 +32,16 @@ public class Seat{
     private String seatNumber;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status")
     private SeatStatus status;
 
     @Column(name="price", precision=8, scale=2, nullable = false)
     private BigDecimal price;
 
-    public static Seat create (SeatRequestDto request) {
-        return Seat.builder()
-                .eventId(request.eventId())
-                .seatNumber(createSeatNum(request.row(), request.column()))
-                .price(request.price())
-                .build();
+    public Seat(UUID eventId,String row, int column,BigDecimal price) {
+        this.eventId = eventId;
+        this.seatNumber = createSeatNum(row,column);
+        this.price = price;
     }
 
     private static String createSeatNum(String row, int column) {

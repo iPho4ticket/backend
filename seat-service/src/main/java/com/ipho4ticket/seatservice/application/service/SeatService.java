@@ -41,7 +41,7 @@ public class SeatService {
     @Transactional
     public SeatResponseDto createSeat(@Valid SeatRequestDto request) {
         // 행 값+열 값 -> 좌석 생성
-        Seat seat=Seat.create(request);
+        Seat seat=new Seat(request.eventId(),request.row(),request.column(),request.price());
 
         // 좌석 상태 변경 - 판매가능
         seat.updateStatus(SeatStatus.AVAILABLE);
@@ -58,7 +58,7 @@ public class SeatService {
     public Map<String, Object> getAllSeats(UUID eventId, Pageable pageable) {
 
         // 관련 event 조회
-        EventResponseDto event=clientEventFeign.getEvent(eventId);
+        // EventResponseDto event=clientEventFeign.getEvent(eventId);
 
         // Redis에서 데이터 조회
         Page<SeatResponseDto> seatsPage;
@@ -82,7 +82,8 @@ public class SeatService {
             seatsPage=new PageImpl<>(seatResponseDtos, pageable, seatResponseDtos.size());
         }
         // 이벤트와 좌석 정보를 Map으로 반환
-        return Map.of("event", event, "seats", seatsPage);
+        // "event", event,
+        return Map.of("seats", seatsPage);
     }
 
 
@@ -136,9 +137,6 @@ public class SeatService {
         if (!seat.getStatus().equals(SeatStatus.AVAILABLE)) {
             throw new IllegalStateException(seatId + "는 이미 예약된 좌석입니다.");
         }
-
-        seat.updateStatus(SeatStatus.RESERVED); // 좌석 상태 업데이트
-        seatRepository.save(seat); // 상태 업데이트 후 좌석 저장
         eventProducer.publishTicketMakingEvent(new TicketMakingEvent(seat.getId(),seat.getSeatNumber(),seat.getPrice())); // 이벤트 발행
 
         // 좌석 데이터를 응답 DTO로 변환하여 반환

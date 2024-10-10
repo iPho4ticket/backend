@@ -1,6 +1,7 @@
 package com.ipho4ticket.seatservice.presentation.controller;
 
 import com.ipho4ticket.seatservice.application.service.SeatService;
+import com.ipho4ticket.seatservice.domain.model.Seat;
 import com.ipho4ticket.seatservice.presentation.request.SeatRequestDto;
 import com.ipho4ticket.seatservice.application.dto.SeatResponseDto;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,17 @@ public class SeatController {
             @RequestBody SeatRequestDto request){
         SeatResponseDto seat=seatService.createSeat(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(seat);
+    }
+
+    /**
+     *
+     * 모든 동작에 좌석 예약이 선행돼야할 것 같아 추가했습니다.
+     */
+    // 예약할 좌석 선택
+    @PostMapping("/select/{seat_id}")
+    public ResponseEntity<SeatResponseDto> selectSeat(@PathVariable("seat_id") UUID seat_id){
+        SeatResponseDto seat=seatService.makeTicket(seat_id);
+        return ResponseEntity.ok(seat);
     }
 
     // 이벤트 좌석 전체 조회

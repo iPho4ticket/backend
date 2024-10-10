@@ -27,6 +27,16 @@ public class UserMapper {
 			.build();
 	}
 
+	public static Auth.Result authDtoFrom(User user) {
+		return Auth.Result.builder()
+			.id(user.getId())
+			.name(user.getName())
+			.email(user.getEmail())
+			.role(user.getRole())
+			.password(user.getPassword())
+			.build();
+	}
+
 	public static Delete.Result deleteDtoFrom(User user) {
 		return Delete.Result.builder()
 			.id(user.getId())

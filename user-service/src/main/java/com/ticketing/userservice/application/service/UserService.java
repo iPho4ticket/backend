@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ticketing.userservice.application.dto.UserDto;
 import com.ticketing.userservice.domain.User;
 import com.ticketing.userservice.domain.repository.UserRepository;
 import com.ticketing.userservice.domain.repository.helper.RepositoryHelper;
@@ -24,7 +25,7 @@ public class UserService {
 	private final RepositoryHelper<User, Long> repositoryHelper;
 
 	/**
-	 * 새로운 유저을 생성하는 메서드
+	 * 새로운 유저를 생성하는 메서드
 	 *
 	 * @param createDto 유저 생성 정보
 	 * @return 생성된 유저 결과
@@ -47,7 +48,7 @@ public class UserService {
 	}
 
 	/**
-	 * 모든 유저을 조회하는 내부 메서드 (관리자용)
+	 * 모든 유저를 조회하는 내부 메서드 (관리자용)
 	 *
 	 * @param pageable 페이징 정보
 	 * @return 페이징된 유저 결과
@@ -57,7 +58,7 @@ public class UserService {
 	}
 
 	/**
-	 * 유저을 삭제하는 메서드
+	 * 유저를 삭제하는 메서드
 	 *
 	 * @param id 삭제할 유저의 ID
 	 */
@@ -79,5 +80,15 @@ public class UserService {
 		User user = repositoryHelper.findOrThrowNotFound(deleteDto.id());
 		user.softDelete(deleteDto.deleterId());
 		return deleteDtoFrom(user);
+	}
+
+	/**
+	 * 이메일로 유저를 조회하는 메서드
+	 *
+	 * @param email 조회할 유저의 이메일
+	 * @return 유저 인증 정보 결과
+	 */
+	public UserDto.Auth.Result readUserByEmail(String email) {
+		return authDtoFrom(userRepository.findByEmail(email));
 	}
 }

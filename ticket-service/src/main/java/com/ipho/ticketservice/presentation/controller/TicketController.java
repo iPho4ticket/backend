@@ -31,7 +31,9 @@ public class TicketController {
         return ResponseEntity.ok(ticketService.cancelTicket(ticketId));
     }
 
-
-
+    @PostMapping("/seat-service/pending/{ticketId}")
+    public ResponseEntity<?> pending(@PathVariable UUID ticketId) {
+        return ResponseEntity.ok(ticketService.pending(ticketId));
+    }
 
 }

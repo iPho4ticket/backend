@@ -144,7 +144,11 @@ public class SeatService {
     public void updateSeatStatus(Seat seat){
         seat.updateStatus(SeatStatus.RESERVED); // 좌석 상태 업데이트
 
-        // Write-through 전략 : DB 업데이트 -> Redis 업데이트
+        /**
+         * DB업데이트 + Redis 업데이트
+         * - 분산 트랜잭션
+         * - DB와 redis 둘 다 수정 : Write-Through 전략으로 비동기적 저장
+         */
         seatRepository.save(seat); // 상태 업데이트 후 좌석 저장
         redisTemplate.opsForValue().set(seat.getId().toString(), seat);  // 캐시에 상태 업데이트
     }

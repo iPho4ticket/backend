@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ipho4ticket.clienteventfeign.ClientEventFeign;
 import com.ipho4ticket.clienteventfeign.dto.EventResponseDto;
 import com.ipho4ticket.seatservice.application.dto.SeatResponseDto;
+import com.ipho4ticket.seatservice.application.events.SeatBookingEvent;
+
+import com.ipho4ticket.seatservice.application.events.TicketMakingEvent;
 import com.ipho4ticket.seatservice.application.service.EventProducer;
 import com.ipho4ticket.seatservice.application.service.SeatService;
 import com.ipho4ticket.seatservice.domain.model.Seat;
@@ -183,30 +186,26 @@ class SeatServiceTest {
     }
 
     @Test
-    void testChangeSeatToSold() {
-        ValueOperations<String, Object> valueOps = mock(ValueOperations.class);
-        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+    void handleSeatBookingEvent() {
+        UUID ticketId = UUID.randomUUID();
+        Long userId=1L;
+        SeatBookingEvent bookingEvent = new SeatBookingEvent(ticketId, seatId, eventId,userId,"A12");
 
-        Seat seat = createSeatFromRequest(seatId, request, SeatStatus.RESERVED);
+        // 좌석 정보 모킹
+        Seat seat = createSeatFromRequest(seatId, request, SeatStatus.AVAILABLE);
         when(seatRepository.findById(seatId)).thenReturn(Optional.of(seat));
 
-        seatService.ChangeSeatToSold(seatId);
-
-        assertEquals(SeatStatus.SOLD, seat.getStatus());
-        verify(seatRepository, times(1)).save(seat);
-    }
-
-    @Test
-    void testChangeSeatToAvailable() {
+        // RedisTemplate 모킹
         ValueOperations<String, Object> valueOps = mock(ValueOperations.class);
         when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        when(valueOps.get("seat::" + seatId)).thenReturn(seat);
 
-        Seat seat = createSeatFromRequest(seatId, request, SeatStatus.RESERVED);
-        when(seatRepository.findById(seatId)).thenReturn(Optional.of(seat));
+        // EventProducer 모킹
+        doNothing().when(eventProducer).publishTicketMakingEvent(any());
 
-        seatService.ChangeSeatToAvailable(seatId);
+        seatService.checkSeat(bookingEvent);
 
-        assertEquals(SeatStatus.AVAILABLE, seat.getStatus());
-        verify(seatRepository, times(1)).save(seat);
+        assertEquals(SeatStatus.RESERVED, seat.getStatus()); // 좌석 상태가 RESERVED인지 확인
+        verify(eventProducer, times(1)).publishTicketMakingEvent(any(TicketMakingEvent.class)); // 이벤트 발행 검증
     }
 }

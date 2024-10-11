@@ -1,6 +1,5 @@
 package com.ipho4ticket.seatservice.infra.messaging;
 
-import com.ipho4ticket.seatservice.application.events.CancelPaymentEvent;
 import com.ipho4ticket.seatservice.application.events.SeatBookingEvent;
 import com.ipho4ticket.seatservice.application.service.SeatService;
 import lombok.RequiredArgsConstructor;
@@ -12,16 +11,9 @@ import org.springframework.stereotype.Component;
 public class EventConsumer {
     private final SeatService seatService;
 
-    @KafkaListener(topics="seat-booking",groupId="seat-group")
+    @KafkaListener(topics="seat-booking",groupId="${spring.application.name}")
     public void handleSeatBooking(String message){
         SeatBookingEvent event=EventSerializer.deserialize(message, SeatBookingEvent.class);
-        seatService.ChangeSeatToSold(event.getSeatId());
+        seatService.checkSeat(event);
     }
-
-    @KafkaListener(topics="cancel-payment",groupId="seat-group")
-    public void handleCancelPayment(String message){
-        CancelPaymentEvent event=EventSerializer.deserialize(message,CancelPaymentEvent.class);
-        seatService.ChangeSeatToAvailable(event.getSeatId());
-    }
-
 }

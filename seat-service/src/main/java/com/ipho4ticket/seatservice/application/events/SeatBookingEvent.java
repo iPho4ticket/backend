@@ -4,13 +4,16 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class SeatBookingEvent {
-    // 변경 필요
     private UUID ticketId;
     private UUID seatId;
+    private UUID eventId;
+    private Long userId;
+    private String seatNumber;
 }

@@ -10,9 +10,12 @@ spring:
     username: postgres
     password: 1234
     driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: localhost:29092
     consumer:
       group-id: ${spring.application.name}-group
       auto-offset-reset: earliest

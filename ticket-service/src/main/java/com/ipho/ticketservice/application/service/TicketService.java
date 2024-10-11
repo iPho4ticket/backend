@@ -27,7 +27,7 @@ public class TicketService {
     public TicketResponseDto reservationTicket(TicketRequestDto dto) {
         Ticket ticket = new Ticket(dto.userId(), dto.eventId(), dto.seatNumber(), dto.price());
         ticketRepository.save(ticket);
-        eventProducer.publishSeatBookingEvent(new SeatBookingEvent(dto.userId(), dto.eventId(), dto.seatNumber(), dto.price()));
+        eventProducer.publishSeatBookingEvent(dto.eventId(), new SeatBookingEvent(dto.userId(), dto.eventId(), dto.seatNumber(), dto.price()));
 
         return TicketResponseDto.createTicket(ticket);
     }
@@ -42,7 +42,7 @@ public class TicketService {
         Ticket ticket = ticketRepository.findByUuidAndStatusNot(ticketId, TicketStatus.CANCELED).orElseThrow(() -> new IllegalArgumentException("not found ticket or already canceled"));
         ticket.cancel();
 
-        eventProducer.publishCancelTicket(new CancelTicketEvent(ticket.getSeatId(), ticket.getEventId(), ticket.getSeatNumber(), ticket.getPrice()));
+        eventProducer.publishCancelTicket(ticket.getEventId(), new CancelTicketEvent(ticket.getSeatId(), ticket.getEventId(), ticket.getSeatNumber(), ticket.getPrice()));
         return TicketResponseDto.cancelTicket(ticket);
     }
 

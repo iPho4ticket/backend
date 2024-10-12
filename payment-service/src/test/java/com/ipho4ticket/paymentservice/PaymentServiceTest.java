@@ -1,8 +1,21 @@
 package com.ipho4ticket.paymentservice;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.anyMap;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.ipho4ticket.clientticketfeign.ClientTicketFeign;
 import com.ipho4ticket.clientticketfeign.dto.ValidationResponse;
 import com.ipho4ticket.paymentservice.application.dto.ApproveResponse;
+import com.ipho4ticket.paymentservice.application.dto.PaymentInfoResponse;
 import com.ipho4ticket.paymentservice.application.dto.ReadyResponse;
 import com.ipho4ticket.paymentservice.application.factory.PaymentProcessorFactory;
 import com.ipho4ticket.paymentservice.application.service.PaymentService;
@@ -11,30 +24,26 @@ import com.ipho4ticket.paymentservice.domain.model.PaymentMethod;
 import com.ipho4ticket.paymentservice.domain.model.PaymentStatus;
 import com.ipho4ticket.paymentservice.domain.repository.PaymentRepository;
 import com.ipho4ticket.paymentservice.domain.service.PaymentProcessor;
+import com.ipho4ticket.paymentservice.infrastructure.external.KakaoPayService;
 import com.ipho4ticket.paymentservice.presentation.request.PaymentRequestDTO;
 import com.ipho4ticket.paymentservice.presentation.response.PaymentResponseDTO;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-
 import java.math.BigDecimal;
 import java.nio.file.AccessDeniedException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 public class PaymentServiceTest {
@@ -50,6 +59,9 @@ public class PaymentServiceTest {
     @Mock
     private PaymentProcessor paymentProcessor;
 
+    @Mock
+    private KakaoPayService kakaoPayService;
+
     @InjectMocks
     private PaymentService paymentService;
 
@@ -58,6 +70,7 @@ public class PaymentServiceTest {
     private UUID ticketId;
     private ReadyResponse readyResponse;
     private ApproveResponse approveResponse;
+
     @BeforeEach
     void 설정() {
         userId = 1L;
@@ -141,7 +154,8 @@ public class PaymentServiceTest {
         when(clientTicketFeign.changeTicketStatus(ticketId)).thenReturn(validationResponse);
 
         // 결제 승인 실행
-        PaymentResponseDTO response = paymentService.approvePayment(payment.getPaymentId(), ticketId, "pgTokenSample");
+        PaymentResponseDTO response = paymentService.approvePayment(payment.getPaymentId(),
+            ticketId, "pgTokenSample");
 
         // 결제 승인 결과 확인
         assertNotNull(response);
@@ -152,9 +166,6 @@ public class PaymentServiceTest {
         verify(paymentProcessor, times(1)).payApprove(eq("T123456789"), eq("pgTokenSample"));
         verify(clientTicketFeign, times(1)).changeTicketStatus(ticketId);  // 티켓 상태 변경 호출 확인
     }
-
-
-
 
 
     @Test
@@ -197,7 +208,8 @@ public class PaymentServiceTest {
         Page<Payment> paymentPage = new PageImpl<>(Arrays.asList(payment), pageable, 1);
         when(paymentRepository.searchWithParams(anyMap(), eq(pageable))).thenReturn(paymentPage);
 
-        Page<PaymentResponseDTO> responsePage = paymentService.searchPayments(Map.of("status", "OPENED"), pageable);
+        Page<PaymentResponseDTO> responsePage = paymentService.searchPayments(
+            Map.of("status", "OPENED"), pageable);
 
         assertNotNull(responsePage);
         assertEquals(1, responsePage.getTotalElements());
@@ -205,35 +217,88 @@ public class PaymentServiceTest {
         verify(paymentRepository, times(1)).searchWithParams(anyMap(), eq(pageable));
     }
 
+
     @Test
     void 결제_취소_성공() throws AccessDeniedException {
+        // Mocking 결제 데이터
         when(paymentRepository.findById(payment.getPaymentId())).thenReturn(Optional.of(payment));
 
-        payment.updateStatus(PaymentStatus.COMPLETED);  // 상태를 COMPLETED로 설정
-        PaymentResponseDTO response = paymentService.cancelPayment(payment.getPaymentId(), userId);
+        // 상태를 COMPLETED로 설정
+        payment.updateStatus(PaymentStatus.COMPLETED);
 
+        // Mocking 카카오페이 결제 정보 조회
+        PaymentInfoResponse paymentInfoResponse = new PaymentInfoResponse();
+        PaymentInfoResponse.Amount amount = new PaymentInfoResponse.Amount();
+
+        // Reflection을 이용해 필드 설정
+        ReflectionTestUtils.setField(amount, "total", 10000);
+        ReflectionTestUtils.setField(amount, "taxFree", 0);
+        ReflectionTestUtils.setField(amount, "vat", 909);
+
+        ReflectionTestUtils.setField(paymentInfoResponse, "amount", amount);
+        // when(kakaoPayService.getPaymentInfo(anyString())).thenReturn(paymentInfoResponse);
+
+        // Mocking 결제 취소 호출
+        ApproveResponse approveResponse = new ApproveResponse();
+        approveResponse.setTid("T123456789");
+        approveResponse.setAid("A123456789");
+        when(paymentProcessorFactory.getPaymentProcessor(PaymentMethod.KAKAO_PAY)).thenReturn(paymentProcessor);
+        when(paymentProcessor.cancelPayment(eq("T123456789"), eq(10000), eq(0), eq(909)))
+            .thenReturn(approveResponse);
+
+        // 결제 취소 실행
+        ApproveResponse response = paymentService.cancelPayment(payment.getPaymentId(), userId, "T123456789", 10000, 0, 909);
+
+        // 검증
         assertNotNull(response);
+        assertEquals("T123456789", response.getTid());
+        assertEquals("A123456789", response.getAid());
         assertEquals(PaymentStatus.CANCELED, payment.getStatus());
+
+        // 검증 - 결제 상태 업데이트 및 저장 호출
         verify(paymentRepository, times(1)).findById(payment.getPaymentId());
         verify(paymentRepository, times(1)).save(payment);
+        verify(paymentProcessor, times(1)).cancelPayment(eq("T123456789"), eq(10000), eq(0), eq(909));
     }
+
+
 
     @Test
     void 결제_취소_권한_없음() {
+        // Mocking 결제 정보
         when(paymentRepository.findById(payment.getPaymentId())).thenReturn(Optional.of(payment));
 
+        // 다른 사용자의 결제 취소 시도
         assertThrows(AccessDeniedException.class, () -> {
-            paymentService.cancelPayment(payment.getPaymentId(), 2L);  // 다른 userId
+            paymentService.cancelPayment(payment.getPaymentId(), 2L, "T123456789", 10000, 0,
+                909);  // 다른 userId로 취소 시도
         });
+
+        // 검증 - 결제 정보 조회만 발생하고 취소 로직은 실행되지 않음
+        verify(paymentRepository, times(1)).findById(payment.getPaymentId());
+        verify(paymentProcessor, times(0)).cancelPayment(anyString(), anyInt(), anyInt(),
+            anyInt());  // 취소 호출이 발생하지 않아야 함
     }
+
 
     @Test
     void 결제_취소_잘못된_상태() {
-        payment.updateStatus(PaymentStatus.OPENED);  // 상태가 COMPLETED가 아님
+        // Mocking 결제 정보
         when(paymentRepository.findById(payment.getPaymentId())).thenReturn(Optional.of(payment));
 
+        // 결제 상태가 COMPLETED가 아닌 경우 (예: OPENED 상태)
+        payment.updateStatus(PaymentStatus.OPENED);
+
+        // 결제 상태가 잘못된 경우 IllegalStateException 발생 확인
         assertThrows(IllegalStateException.class, () -> {
-            paymentService.cancelPayment(payment.getPaymentId(), userId);
+            paymentService.cancelPayment(payment.getPaymentId(), userId, "T123456789", 10000, 0,
+                909);
         });
+
+        // 검증 - 결제 정보 조회만 발생하고 취소 로직은 실행되지 않음
+        verify(paymentRepository, times(1)).findById(payment.getPaymentId());
+        verify(paymentProcessor, times(0)).cancelPayment(anyString(), anyInt(), anyInt(),
+            anyInt());  // 취소 호출이 발생하지 않아야 함
     }
+
 }

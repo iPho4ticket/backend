@@ -1,9 +1,13 @@
 package com.ipho4ticket.paymentservice.presentation.controller;
 
+import com.ipho4ticket.paymentservice.application.dto.ApproveResponse;
+import com.ipho4ticket.paymentservice.application.dto.PaymentInfoResponse;
 import com.ipho4ticket.paymentservice.application.dto.ReadyResponse;
 import com.ipho4ticket.paymentservice.application.service.PaymentService;
+import com.ipho4ticket.paymentservice.infrastructure.external.KakaoPayService;
 import com.ipho4ticket.paymentservice.presentation.request.PaymentRequestDTO;
 import com.ipho4ticket.paymentservice.presentation.response.PaymentResponseDTO;
+import java.math.BigDecimal;
 import java.nio.file.AccessDeniedException;
 import java.util.Map;
 import java.util.UUID;
@@ -27,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final KakaoPayService kakaoPayService;
     Long exampleUserId = 1L;
 
     // 1. 결제 등록 (POST)
@@ -57,6 +62,29 @@ public class PaymentController {
         return ResponseEntity.ok(paymentResponse);
     }
 
+    // 결제 취소 요청을 처리하는 메소드
+    @PostMapping("/cancel")
+    public ResponseEntity<ApproveResponse> cancelPayment(
+        @RequestParam("payment_id") UUID paymentId,
+        @RequestParam("tid") String tid) throws AccessDeniedException {
+
+        // 1. 결제 정보 조회
+        PaymentInfoResponse paymentInfo = kakaoPayService.getPaymentInfo(tid);
+
+        System.out.println(paymentInfo.toString());
+
+
+        // 2. 남은 취소 가능 금액을 가져와서 취소 금액 결정
+        Integer cancelAmount = paymentInfo.getAmount().getTotal();
+        Integer cancelTaxFreeAmount = paymentInfo.getAmount().getTaxFree();
+        Integer cancelVatAmount = paymentInfo.getAmount().getVat();
+
+        // 3. 결제 취소 요청
+        ApproveResponse cancelResponse = paymentService.cancelPayment(paymentId, exampleUserId,  tid, cancelAmount, cancelTaxFreeAmount, cancelVatAmount);
+
+        // 취소 완료된 결제 정보를 반환
+        return ResponseEntity.ok(cancelResponse);
+    }
 
     // 2. 결제 내역 단건 조회 (GET)
     @GetMapping("/{payment_id}")
@@ -104,12 +132,12 @@ public class PaymentController {
     }
 
 
-    // 5. 결제 취소 (DELETE)
-    @DeleteMapping("/{payment_id}")
-    public ResponseEntity<PaymentResponseDTO> cancelPayment(@PathVariable UUID payment_id)
-        throws AccessDeniedException {
-
-        PaymentResponseDTO payment = paymentService.cancelPayment(payment_id, exampleUserId);
-        return ResponseEntity.ok(payment);
-    }
+//    // 5. 결제 취소 (DELETE)
+//    @DeleteMapping("/{payment_id}")
+//    public ResponseEntity<PaymentResponseDTO> cancelPayment(@PathVariable UUID payment_id)
+//        throws AccessDeniedException {
+//
+//        PaymentResponseDTO payment = paymentService.cancelPayment(payment_id, exampleUserId);
+//        return ResponseEntity.ok(payment);
+//    }
 }

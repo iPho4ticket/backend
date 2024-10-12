@@ -28,7 +28,7 @@ public class Seat{
     @Column(name = "event_id", nullable = false)
     private UUID eventId;
 
-    @Column(name="seat_number", unique=true, nullable=false)
+    @Column(name="seat_number", nullable=false)
     private String seatNumber;
 
     @Enumerated(EnumType.STRING)
@@ -43,7 +43,6 @@ public class Seat{
         this.seatNumber = createSeatNum(row,column);
         this.price = price;
     }
-
     private static String createSeatNum(String row, int column) {
         return row+column;
     }

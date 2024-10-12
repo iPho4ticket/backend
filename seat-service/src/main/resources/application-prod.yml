@@ -39,4 +39,4 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 server:
-  port: 19091
+  port: 19094

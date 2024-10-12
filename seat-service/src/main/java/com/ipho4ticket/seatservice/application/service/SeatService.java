@@ -28,6 +28,8 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.ipho4ticket.seatservice.domain.model.QSeat.seat;
+
 @Service
 @RequiredArgsConstructor
 public class SeatService {
@@ -43,6 +45,9 @@ public class SeatService {
         // 행 값+열 값 -> 좌석 생성
         Seat seat=new Seat(request.eventId(),request.row(),request.column(),request.price());
 
+        if (seatRepository.findBySeatNumberAndEventId(seat.getSeatNumber(), seat.getEventId())) {
+            throw new IllegalArgumentException(seat.getSeatNumber() + "는 이미 등록된 좌석입니다.");
+        }
         // 좌석 상태 변경 - 판매가능
         seat.updateStatus(SeatStatus.AVAILABLE);
 
@@ -147,7 +152,7 @@ public class SeatService {
         /**
          * DB업데이트 + Redis 업데이트
          * - 분산 트랜잭션
-         * - DB와 redis 둘 다 수정 : Write-Through 전략으로 비동기적 저장
+         * - DB와 redis 둘 다 수정 : Write-Through 전략
          */
         seatRepository.save(seat); // 상태 업데이트 후 좌석 저장
         redisTemplate.opsForValue().set(seat.getId().toString(), seat);  // 캐시에 상태 업데이트

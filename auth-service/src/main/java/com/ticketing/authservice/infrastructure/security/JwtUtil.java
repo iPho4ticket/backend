@@ -1,6 +1,8 @@
 package com.ticketing.authservice.infrastructure.security;
 
 import java.util.Date;
+import java.util.Map;
+import java.util.Optional;
 
 import javax.crypto.SecretKey;
 
@@ -76,5 +78,20 @@ public class JwtUtil {
 		} catch (Exception e) {
 			return false;
 		}
+	}
+
+	/**
+	 * JWT 토큰의 유효성을 검증하고, 유효한 경우 해당 토큰의 클레임 정보를 추출하는 메서드입니다.
+	 *
+	 * @param token 검증할 JWT 토큰
+	 * @return 토큰이 유효한 경우 클레임 정보를 포함한 Optional을 반환하며, 유효하지 않은 경우 빈 Optional을 반환합니다.
+	 */
+	public Optional<Map<String, Object>> validateAndExtractClaims(String token) {
+		// 토큰 유효성 검증
+		if (!isTokenValid(token)) {
+			return Optional.empty(); // 토큰이 유효하지 않으면 빈 Optional 반환
+		}
+		// 유효한 토큰일 경우 클레임 정보 반환
+		return Optional.of(extractClaims(token));
 	}
 }

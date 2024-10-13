@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ticketing.authservice.application.service.AuthService;
 
 import lombok.RequiredArgsConstructor;
-import reactor.core.publisher.Mono;
 
 /**
  * 내부 시스템에서 인증 관련 요청을 처리하는 컨트롤러입니다.
@@ -31,7 +30,7 @@ public class AuthInternalController {
 	 * @return 검증된 클레임 정보
 	 */
 	@GetMapping("/validate")
-	public Mono<Map<String, Object>> validateToken(@RequestHeader("Authorization") String token) {
+	public Map<String, Object> validateToken(@RequestHeader("Authorization") String token) {
 		return authService.validateToken(token);
 	}
 }

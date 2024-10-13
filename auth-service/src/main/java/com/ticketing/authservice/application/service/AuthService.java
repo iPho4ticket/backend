@@ -13,7 +13,6 @@ import com.ticketing.authservice.infrastructure.security.BCryptUtil;
 import com.ticketing.authservice.infrastructure.security.JwtUtil;
 
 import lombok.RequiredArgsConstructor;
-import reactor.core.publisher.Mono;
 
 /**
  * AuthService는 회원가입 및 로그인과 관련된 비즈니스 로직을 처리하는 서비스입니다.
@@ -66,20 +65,11 @@ public class AuthService {
 	 * 전달된 JWT 토큰의 유효성을 확인하고, 유효한 경우 해당 토큰의 클레임 정보를 반환합니다.
 	 *
 	 * @param token 검증할 JWT 토큰
-	 * @return 토큰이 유효한 경우 클레임 정보를 포함한 Map을 반환하고,
-	 *         유효하지 않을 경우 Mono.error를 반환합니다.
+	 * @return 토큰이 유효한 경우 클레임 정보를 포함한 Map을 반환합니다.
 	 */
-	public Mono<Map<String, Object>> validateToken(String token) {
-		// JWT 유효성 검증
-		if (!jwtUtil.isTokenValid(token)) {
-			// 토큰이 유효하지 않은 경우 InvalidTokenException을 던집니다
-			return Mono.error(new InvalidTokenException(token));
-		}
-
-		// 유효한 토큰일 경우, 토큰에서 클레임 정보를 추출합니다
-		Map<String, Object> claims = jwtUtil.extractClaims(token);
-
-		// 추출한 클레임 정보를 Mono로 감싸서 반환합니다
-		return Mono.just(claims);
+	public Map<String, Object> validateToken(String token) {
+		// 토큰 유효성 검증과 클레임 추출을 한 번에 처리
+		return jwtUtil.validateAndExtractClaims(token)
+			.orElseThrow(() -> new InvalidTokenException(token));
 	}
 }

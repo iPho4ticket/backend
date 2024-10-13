@@ -20,12 +20,8 @@ import org.mockito.Mock;
 import com.ticketing.authservice.application.dto.UserDto;
 import com.ticketing.authservice.application.mapper.AuthDataMapper;
 import com.ticketing.authservice.infrastructure.client.UserFeignService;
-import com.ticketing.authservice.infrastructure.common.CustomException.*;
 import com.ticketing.authservice.infrastructure.security.BCryptUtil;
 import com.ticketing.authservice.infrastructure.security.JwtUtil;
-
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
 
 /**
  * {@code AuthServiceTest}는 {@code AuthService}의 회원 인증과 관련된
@@ -110,17 +106,13 @@ class AuthServiceTest {
 		String validToken = jwtUtil.createToken(USER_ID, USER_EMAIL, USER_ROLE.getAuthority());
 
 		// When: 토큰 검증 처리
-		Mono<Map<String, Object>> result = authService.validateToken(validToken);
+		Map<String, Object> claims = authService.validateToken(validToken);
 
 		// Then: 클레임 정보가 성공적으로 반환되었는지 확인
-		StepVerifier.create(result)
-			.assertNext(returnedClaims -> {
-				assertThat(returnedClaims.get("sub"), is(USER_ID.toString()));
-				assertThat(returnedClaims.get("email"), is(USER_EMAIL));
-				assertThat(returnedClaims.get("role"), is(USER_ROLE.getAuthority()));
-				// iat, exp 등은 검증하지 않음
-			})
-			.verifyComplete();
+		assertThat(claims.get("sub"), is(USER_ID.toString()));
+		assertThat(claims.get("email"), is(USER_EMAIL));
+		assertThat(claims.get("role"), is(USER_ROLE.getAuthority()));
+		// iat, exp 등은 검증하지 않음
 	}
 
 	/**
@@ -134,9 +126,6 @@ class AuthServiceTest {
 		String invalidToken = "invalidToken";
 
 		// When & Then: InvalidTokenException 발생 여부 확인
-		Mono<Map<String, Object>> result = authService.validateToken(invalidToken);
-		StepVerifier.create(result)
-			.expectError(InvalidTokenException.class)
-			.verify();
+		assertThrows(InvalidTokenException.class, () -> authService.validateToken(invalidToken));
 	}
 }

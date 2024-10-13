@@ -55,7 +55,7 @@ public class EventProducerTest {
     @DisplayName("(Ticket -> Seat): 좌석 예매 이벤트 발행")
     void publishSeatBookingEvent() throws Exception {
         SeatBookingEvent requestEvent = new SeatBookingEvent(UUID.randomUUID(), 1L, UUID.randomUUID(), "A1", 10000.0);
-        producer.publishSeatBookingEvent(requestEvent);
+        producer.publishSeatBookingEvent(requestEvent.getEventId(), requestEvent);
 
         boolean messageConsumed = bookingLatch.await(10, TimeUnit.SECONDS);
         assertTrue(messageConsumed);
@@ -71,7 +71,7 @@ public class EventProducerTest {
     @DisplayName("(Ticket -> Seat): 티켓 취소 이벤트 발행")
     void publishCancelTicket() throws Exception {
         CancelTicketEvent requestEvent = new CancelTicketEvent(UUID.randomUUID(), UUID.randomUUID(), "A1", 10000.0);
-        producer.publishCancelTicket(requestEvent);
+        producer.publishCancelTicket(requestEvent.getEventId(), requestEvent);
 
         boolean messageConsumed = cancelLatch.await(10, TimeUnit.SECONDS);
         assertTrue(messageConsumed);

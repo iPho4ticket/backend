@@ -18,6 +18,22 @@ spring:
           uri: ${AUTH_SERVICE_URI}
           predicates:
             - Path=/api/v1/auth/**
+        - id: event-service
+          uri: ${EVENT_SERVICE_URI}
+          predicates:
+            - Path=/api/v1/events/**
+        - id: seat-service
+          uri: ${SEAT_SERVICE_URI}
+          predicates:
+            - Path=/api/v1/seats/**
+        - id: ticket-service
+          uri: ${TICKET_SERVICE_URI}
+          predicates:
+            - Path=/api/v1/ticket/**
+        - id: payment-service
+          uri: ${PAYMENT_SERVICE_URI}
+          predicates:
+            - Path=/api/v1/payments/**
         - id: internal-service
           uri: ${INTERNAL_SERVICE_URI}
           predicates:

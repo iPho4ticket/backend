@@ -3,6 +3,7 @@ package com.ipho4ticket.paymentservice;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.anyMap;
@@ -15,7 +16,6 @@ import static org.mockito.Mockito.when;
 import com.ipho4ticket.clientticketfeign.ClientTicketFeign;
 import com.ipho4ticket.clientticketfeign.dto.ValidationResponse;
 import com.ipho4ticket.paymentservice.application.dto.ApproveResponse;
-import com.ipho4ticket.paymentservice.application.dto.PaymentInfoResponse;
 import com.ipho4ticket.paymentservice.application.dto.ReadyResponse;
 import com.ipho4ticket.paymentservice.application.factory.PaymentProcessorFactory;
 import com.ipho4ticket.paymentservice.application.service.PaymentService;
@@ -226,28 +226,31 @@ public class PaymentServiceTest {
         // 상태를 COMPLETED로 설정
         payment.updateStatus(PaymentStatus.COMPLETED);
 
-        // Mocking 카카오페이 결제 정보 조회
-        PaymentInfoResponse paymentInfoResponse = new PaymentInfoResponse();
-        PaymentInfoResponse.Amount amount = new PaymentInfoResponse.Amount();
+        // UUID로 티켓 ID 설정
+        UUID ticketId = UUID.randomUUID();
+        ReflectionUtils.setField(payment, "ticketId", ticketId);
 
-        // Reflection을 이용해 필드 설정
-        ReflectionTestUtils.setField(amount, "total", 10000);
-        ReflectionTestUtils.setField(amount, "taxFree", 0);
-        ReflectionTestUtils.setField(amount, "vat", 909);
-
-        ReflectionTestUtils.setField(paymentInfoResponse, "amount", amount);
-        // when(kakaoPayService.getPaymentInfo(anyString())).thenReturn(paymentInfoResponse);
+        // Mocking 티켓 상태 검증 응답
+        ValidationResponse validationResponse = new ValidationResponse(true, "Valid");
+        when(clientTicketFeign.checkTicketCancel(eq(ticketId), eq(payment.getUserId()))).thenReturn(
+            validationResponse);
 
         // Mocking 결제 취소 호출
         ApproveResponse approveResponse = new ApproveResponse();
         approveResponse.setTid("T123456789");
         approveResponse.setAid("A123456789");
-        when(paymentProcessorFactory.getPaymentProcessor(PaymentMethod.KAKAO_PAY)).thenReturn(paymentProcessor);
+        when(paymentProcessorFactory.getPaymentProcessor(PaymentMethod.KAKAO_PAY)).thenReturn(
+            paymentProcessor);
         when(paymentProcessor.cancelPayment(eq("T123456789"), eq(10000), eq(0), eq(909)))
             .thenReturn(approveResponse);
 
+        // Mocking 티켓 상태 변경 응답
+        ValidationResponse validationPostResponse = new ValidationResponse(true, "Status changed");
+        when(clientTicketFeign.changeTicketStatus(ticketId)).thenReturn(validationPostResponse);
+
         // 결제 취소 실행
-        ApproveResponse response = paymentService.cancelPayment(payment.getPaymentId(), userId, "T123456789", 10000, 0, 909);
+        ApproveResponse response = paymentService.cancelPayment(payment.getPaymentId(), userId,
+            "T123456789", 10000, 0, 909);
 
         // 검증
         assertNotNull(response);
@@ -258,15 +261,24 @@ public class PaymentServiceTest {
         // 검증 - 결제 상태 업데이트 및 저장 호출
         verify(paymentRepository, times(1)).findById(payment.getPaymentId());
         verify(paymentRepository, times(1)).save(payment);
-        verify(paymentProcessor, times(1)).cancelPayment(eq("T123456789"), eq(10000), eq(0), eq(909));
-    }
+        verify(paymentProcessor, times(1)).cancelPayment(eq("T123456789"), eq(10000), eq(0),
+            eq(909));
 
+        // 티켓 검증 및 상태 변경 호출 확인
+        verify(clientTicketFeign, times(1)).checkTicketCancel(eq(ticketId),
+            eq(payment.getUserId()));
+        verify(clientTicketFeign, times(1)).changeTicketStatus(ticketId);
+    }
 
 
     @Test
     void 결제_취소_권한_없음() {
         // Mocking 결제 정보
         when(paymentRepository.findById(payment.getPaymentId())).thenReturn(Optional.of(payment));
+
+        // UUID로 티켓 ID 설정 (Reflection 사용)
+        UUID ticketId = UUID.randomUUID();
+        ReflectionTestUtils.setField(payment, "ticketId", ticketId);  // Reflection 사용하여 필드 설정
 
         // 다른 사용자의 결제 취소 시도
         assertThrows(AccessDeniedException.class, () -> {
@@ -278,6 +290,8 @@ public class PaymentServiceTest {
         verify(paymentRepository, times(1)).findById(payment.getPaymentId());
         verify(paymentProcessor, times(0)).cancelPayment(anyString(), anyInt(), anyInt(),
             anyInt());  // 취소 호출이 발생하지 않아야 함
+        verify(clientTicketFeign, times(0)).checkTicketCancel(any(UUID.class),
+            anyLong());  // 티켓 검증이 발생하지 않아야 함
     }
 
 
@@ -285,6 +299,10 @@ public class PaymentServiceTest {
     void 결제_취소_잘못된_상태() {
         // Mocking 결제 정보
         when(paymentRepository.findById(payment.getPaymentId())).thenReturn(Optional.of(payment));
+
+        // UUID로 티켓 ID 설정 (Reflection 사용)
+        UUID ticketId = UUID.randomUUID();
+        ReflectionTestUtils.setField(payment, "ticketId", ticketId);  // Reflection 사용하여 필드 설정
 
         // 결제 상태가 COMPLETED가 아닌 경우 (예: OPENED 상태)
         payment.updateStatus(PaymentStatus.OPENED);
@@ -299,6 +317,9 @@ public class PaymentServiceTest {
         verify(paymentRepository, times(1)).findById(payment.getPaymentId());
         verify(paymentProcessor, times(0)).cancelPayment(anyString(), anyInt(), anyInt(),
             anyInt());  // 취소 호출이 발생하지 않아야 함
+        verify(clientTicketFeign, times(0)).checkTicketCancel(any(UUID.class),
+            anyLong());  // 티켓 검증이 발생하지 않아야 함
     }
+
 
 }

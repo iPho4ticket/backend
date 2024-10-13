@@ -43,7 +43,7 @@ public class TicketService {
         Ticket ticket = ticketRepository.findByUuidAndStatusNot(ticketId, TicketStatus.CANCELED).orElseThrow(() -> new IllegalArgumentException("not found ticket or already canceled"));
         ticket.cancel();
 
-        eventProducer.publishCancelTicket(new CancelTicketEvent(ticket.getSeatId(), ticket.getEventId(), ticket.getSeatNumber(), ticket.getPrice()));
+        eventProducer.publishCancelTicket(ticket.getEventId(), new CancelTicketEvent(ticket.getSeatId(), ticket.getEventId(), ticket.getSeatNumber(), ticket.getPrice()));
         return TicketResponseDto.cancelTicket(ticket);
     }
 

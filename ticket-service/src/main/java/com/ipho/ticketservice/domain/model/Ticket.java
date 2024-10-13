@@ -27,14 +27,13 @@ public class Ticket {
     private UUID seatId;
     private UUID eventId;
 
+    private String eventName;
     private String seatNumber;
     private Double price;
 
     private TicketStatus status;
     private Timestamp reservationTime;
     private Timestamp expirationTime;
-
-
 
     public Ticket(Long userId, UUID eventId, String seatNumber, Double price) {
         this.userId = userId;
@@ -46,6 +45,9 @@ public class Ticket {
         this.expirationTime = Timestamp.from(LocalDateTime.now().plusDays(3).atZone(ZoneId.systemDefault()).toInstant());
     }
 
+    public void addEventName(String eventName) {
+        this.eventName = eventName;
+    }
     public void pending() {
         this.status = TicketStatus.PENDING;
     }

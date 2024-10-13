@@ -32,13 +32,13 @@ public class TicketServiceMockTest {
     @Autowired
     private TicketService ticketService;
     private TicketRepository ticketRepository;
-    private EventProducer eventService;
+    private EventProducer eventProducer;
 
     @BeforeEach
     void setUp() {
         ticketRepository = mock(TicketRepository.class);
-        eventService = mock(EventProducer.class);
-        ticketService = new TicketService(ticketRepository, eventService);
+        eventProducer = mock(EventProducer.class);
+        ticketService = new TicketService(ticketRepository, eventProducer);
     }
 
     @Test
@@ -52,7 +52,7 @@ public class TicketServiceMockTest {
 
         assertNotNull(responseDto);
         assertEquals(savedTicket.getUuid(), responseDto.ticketId());
-        verify(eventService, times(1)).publishSeatBookingEvent(any(SeatBookingEvent.class));
+        verify(eventProducer, times(1)).publishSeatBookingEvent(any(SeatBookingEvent.class));
     }
 
     @Test
@@ -79,7 +79,7 @@ public class TicketServiceMockTest {
         assertEquals(ticket.getUuid(), responseDto.ticketId());
         assertEquals(ticket.getStatus().toString(), responseDto.ticketStatus());
 
-        verify(eventService, times(1)).publishCancelTicket(any(CancelTicketEvent.class));
+        verify(eventProducer, times(1)).publishCancelTicket(any(CancelTicketEvent.class));
     }
 
     @Test
@@ -125,8 +125,5 @@ public class TicketServiceMockTest {
         assertEquals(exception.getMessage(), "no authority userId");
         System.out.println("exception = " + exception.getMessage());
     }
-    
-    
-    
-    
+
 }

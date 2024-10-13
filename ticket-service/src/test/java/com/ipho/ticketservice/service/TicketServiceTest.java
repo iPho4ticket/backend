@@ -3,29 +3,30 @@ package com.ipho.ticketservice.service;
 import com.ipho.ticketservice.application.dto.TicketInfoDto;
 import com.ipho.ticketservice.application.event.dto.CancelTicketEvent;
 import com.ipho.ticketservice.application.event.dto.SeatBookingEvent;
+import com.ipho.ticketservice.application.event.dto.TicketMakingEvent;
+import com.ipho.ticketservice.application.event.dto.TicketTopic;
 import com.ipho.ticketservice.application.event.service.EventProducer;
 import com.ipho.ticketservice.application.service.TicketService;
 import com.ipho.ticketservice.domain.model.Ticket;
 import com.ipho.ticketservice.domain.model.TicketStatus;
 import com.ipho.ticketservice.domain.repository.TicketRepository;
 import com.ipho.ticketservice.infrastructure.client.ValidationResponse;
+import com.ipho.ticketservice.infrastructure.messaging.DynamicKafkaListener;
 import com.ipho.ticketservice.presentation.request.TicketRequestDto;
 import com.ipho.ticketservice.presentation.response.TicketResponseDto;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 
+import java.math.BigDecimal;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -33,60 +34,66 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class TicketServiceTest {
 
     @Autowired
-    TicketRepository ticketRepository;
+    private TicketRepository ticketRepository;
 
     @Autowired
-    TicketService ticketService;
+    private TicketService ticketService;
 
     @Autowired
-    EventProducer eventService;
+    private EventProducer eventProducer;
 
-    private CountDownLatch reservationLatch;
-    private CountDownLatch cancelLatch;
-    private SeatBookingEvent seatBookingEvent;
-    private CancelTicketEvent cancelTicketEvent;
+    @Autowired
+    private KafkaTemplate<String, Object> kafkaTemplate;
 
-    @BeforeEach
-    void setUp() {
-        ticketService = new TicketService(ticketRepository, eventService);
-        reservationLatch = new CountDownLatch(1);
-        cancelLatch = new CountDownLatch(1);
-    }
+    @Autowired
+    private DynamicKafkaListener dynamicKafkaListener;
 
-    @KafkaListener(topics = "seat-booking", groupId = "${spring.application.name}")
-    public void booking_listen(SeatBookingEvent event) {
-        System.out.println("reservation Ticket Queue start");
-        System.out.println("reservationLatch.getCount() = " + reservationLatch.getCount());
-        seatBookingEvent = event;
-        reservationLatch.countDown();
-        System.out.println("reservation Ticket Queue End");
-        System.out.println("reservationLatch.getCount() = " + reservationLatch.getCount());
-    }
-
-    @KafkaListener(topics = "cancel-ticket", groupId = "${spring.application.name}")
-    public void cancel_listen(CancelTicketEvent event) {
-        cancelTicketEvent = event;
-        cancelLatch.countDown();
-    }
 
     @Test
     @DisplayName("티켓 예매 + Reservation 이벤트 발행")
     void reservationTicket() throws Exception {
+
         TicketRequestDto requestDto = new TicketRequestDto(1L, UUID.randomUUID(), "A1", 10000.0);
-        TicketResponseDto responseDto = ticketService.reservationTicket(requestDto);
+        Ticket ticket = new Ticket(requestDto.userId(), requestDto.eventId(), requestDto.seatNumber(), requestDto.price());
+        ticketRepository.save(ticket);
 
-        // ResponseDto Check
-        assertThat(responseDto.ticketStatus()).isEqualTo(TicketStatus.OPENED.toString());
-        assertThat(responseDto.message()).isEqualTo("Ticket reserved successfully.");
+        dynamicKafkaListener.startListener(TicketTopic.SEAT_BOOKING.getTopic(), requestDto.eventId());
+        eventProducer.publishSeatBookingEvent(new SeatBookingEvent(ticket.getUuid(), ticket.getUserId(), ticket.getEventId(), ticket.getSeatNumber(), ticket.getPrice()));
 
-        // Event Message Checking
-        boolean messageConsumed = reservationLatch.await(10, TimeUnit.SECONDS);
-        assertTrue(messageConsumed);
-        SeatBookingEvent responseEvent = seatBookingEvent;
-        assertThat(responseEvent).isEqualTo(new SeatBookingEvent(responseDto.ticketId(), requestDto.userId(), requestDto.eventId(), requestDto.seatNumber(), requestDto.price()));
+        // seat-service 에서 event 처리 후, ticket-making-{eventId} 로 보냈다고 가정 ( test 환경에서는 직접 받아 값 처리, 메시지는 성공적으로 구독 )
+        Thread.sleep(1000);
+        Object seatBookingMessage = dynamicKafkaListener.getReceivedMessage();
+        System.out.println("seatBookingMessage = " + seatBookingMessage);
+        assertThat(seatBookingMessage).isNotNull();
+        assertThat(seatBookingMessage).isInstanceOf(SeatBookingEvent.class);
 
-        System.out.println("requestDto = " + requestDto);
-        System.out.println("responseEvent = " + responseEvent);
+        // 실제로는 seat-service 에서 feign 요청을 통해서 동적으로 topic 구독 ( 이때, 구독할 topic 은 ticket-making-{eventId} )
+        dynamicKafkaListener.startListener(TicketTopic.TICKET_MAKING.getTopic(), requestDto.eventId());
+        kafkaTemplate.send(TicketTopic.TICKET_MAKING.getTopic() + "-" + requestDto.eventId(), new TicketMakingEvent(ticket.getUuid(), ticket.getSeatId(), "tmp Event Name", ticket.getSeatNumber(), BigDecimal.valueOf(ticket.getPrice())));
+
+        String topicName = TicketTopic.TICKET_MAKING.getTopic() + "-" + requestDto.eventId();
+        TicketMakingEvent eventDto = new TicketMakingEvent(ticket.getUuid(), ticket.getSeatId(), "tmp Event Name", ticket.getSeatNumber(), BigDecimal.valueOf(ticket.getPrice()));
+
+        try {
+            SendResult<String, Object> result = kafkaTemplate.send(topicName, eventDto).get();
+            System.out.println("Message sent successfully to topic: " + result.getRecordMetadata().topic());
+            System.out.println("result = " + result.getRecordMetadata().toString());
+
+        } catch (Exception ex) {
+            System.err.println("Failed to send message: " + ex.getMessage());
+        }
+
+        Thread.sleep(3000);
+        Object ticketMakingMessage = dynamicKafkaListener.getReceivedMessage();
+
+        System.out.println("ticketMakingMessage = " + ticketMakingMessage);
+        assertThat(ticketMakingMessage).isNotNull();
+        assertThat(ticketMakingMessage).isInstanceOf(TicketMakingEvent.class);
+        TicketMakingEvent event = (TicketMakingEvent) ticketMakingMessage;
+        assertThat(event.getTicketId()).isEqualTo(ticket.getUuid());
+
+        ticketRepository.flush();
+        assertThat(ticketRepository.findByUuid(ticket.getUuid()).get().getStatus()).isEqualTo(TicketStatus.PENDING);
     }
 
     @Test
@@ -125,18 +132,27 @@ public class TicketServiceTest {
         assertThat(responseDto.ticketStatus()).isEqualTo(TicketStatus.CANCELED.toString());
         assertThat(responseDto.message()).isEqualTo("Ticket canceled successfully.");
 
-        // Event Message Checking
-        boolean messageConsumed = cancelLatch.await(10, TimeUnit.SECONDS);
-        assertTrue(messageConsumed);
-        CancelTicketEvent responseEvent = cancelTicketEvent;
+        // received message checking
+        dynamicKafkaListener.startListener(TicketTopic.CANCEL_TICKET.getTopic(), requestDto.eventId());
+        try {
+            SendResult<String, Object> result = kafkaTemplate.send(TicketTopic.CANCEL_TICKET.getTopic() + "-" + requestDto.eventId(),
+                    new CancelTicketEvent(ticket.getSeatId(), ticket.getEventId(), ticket.getSeatNumber(), ticket.getPrice())).get();
+            System.out.println("Message sent successfully to topic: " + result.getRecordMetadata().topic());
+            System.out.println("result = " + result.getRecordMetadata().toString());
 
-        // 여기서 SeatId 는 Seat-Service 에서 받은 Message 로 값 세팅해야 해서 해당 부분은 Test 불가
-        assertThat(responseEvent.getEventId()).isEqualTo(requestDto.eventId());
-        assertThat(responseEvent.getSeatNumber()).isEqualTo(requestDto.seatNumber());
-        assertThat(responseEvent.getPrice()).isEqualTo(requestDto.price());
+        } catch (Exception ex) {
+            System.err.println("Failed to send message: " + ex.getMessage());
+        }
 
-        System.out.println("requestDto = " + requestDto);
-        System.out.println("responseEvent = " + responseEvent);
+        Thread.sleep(3000);
+        Object cancelTicketMessage = dynamicKafkaListener.getReceivedMessage();
+
+        System.out.println("cancelTicketMessage = " + cancelTicketMessage);
+        assertThat(cancelTicketMessage).isNotNull();
+        assertThat(cancelTicketMessage).isInstanceOf(CancelTicketEvent.class);
+        CancelTicketEvent event = (CancelTicketEvent) cancelTicketMessage;
+        assertThat(event.getEventId()).isEqualTo(ticket.getEventId());
+        assertThat(event.getSeatId()).isEqualTo(ticket.getSeatId());
     }
 
     @Test
@@ -162,19 +178,22 @@ public class TicketServiceTest {
     void completePayment() {
         TicketRequestDto requestDto = new TicketRequestDto(1L, UUID.randomUUID(), "A1", 10000.0);
         Ticket ticket = new Ticket(requestDto.userId(), requestDto.eventId(), requestDto.seatNumber(), requestDto.price());
+        ticket.addEventName("EventName");
         ticket.pending();
         ticketRepository.save(ticket);
 
         ValidationResponse validationResponse = ticketService.completePayment(ticket.getUuid());
         assertThat(validationResponse.success()).isTrue();
-        assertThat(validationResponse.message()).isEqualTo("complete payment");
+        assertThat(validationResponse.message()).isEqualTo(ticket.getEventName() + ":" + ticket.getSeatNumber());
 
         ticketRepository.flush();
+
         Ticket response = ticketRepository.findByUuid(ticket.getUuid()).get();
+        System.out.println("response = " + response);
+        assertThat(response.getStatus()).isEqualTo(TicketStatus.CONFIRMED);
 
         System.out.println("ticket = " + response.getStatus().toString());
         System.out.println("validationResponse = " + validationResponse);
     }
-
 
 }

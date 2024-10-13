@@ -150,11 +150,22 @@ public class PaymentService {
         checkPaymentStatus(payment, PaymentStatus.COMPLETED);
 
         // 티켓과 feign 요청으로 검증하는 로직 추가
+        ValidationResponse validationResponse = clientTicketFeign.checkTicketCancel(payment.getTicketId(), payment.getUserId());
+        if (!validationResponse.success()){
+            throw new IllegalStateException(validationResponse.message());
+        }
+
+        PaymentProcessor processor = paymentProcessorFactory.getPaymentProcessor(payment.getMethod());
+        ApproveResponse approveResponse = processor.cancelPayment(tid, cancelAmount, cancelTaxFreeAmount, cancelVatAmount);
 
         updatePaymentStatus(payment, PaymentStatus.CANCELED);
 
-        PaymentProcessor processor = paymentProcessorFactory.getPaymentProcessor(payment.getMethod());
-        return processor.cancelPayment(tid, cancelAmount, cancelTaxFreeAmount, cancelVatAmount);
+        ValidationResponse validationPostResponse = clientTicketFeign.changeTicketStatus(payment.getTicketId());
+        if (!validationPostResponse.success()){
+            throw new IllegalStateException(validationResponse.message());
+        }
+
+        return approveResponse;
     }
 
     // Helper method to create new Payment entity

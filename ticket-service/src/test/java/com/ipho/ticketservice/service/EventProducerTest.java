@@ -54,7 +54,7 @@ public class EventProducerTest {
     @Test
     @DisplayName("(Ticket -> Seat): 좌석 예매 이벤트 발행")
     void publishSeatBookingEvent() throws Exception {
-        SeatBookingEvent requestEvent = new SeatBookingEvent(1L, UUID.randomUUID(), "A1", 10000.0);
+        SeatBookingEvent requestEvent = new SeatBookingEvent(UUID.randomUUID(), 1L, UUID.randomUUID(), "A1", 10000.0);
         producer.publishSeatBookingEvent(requestEvent);
 
         boolean messageConsumed = bookingLatch.await(10, TimeUnit.SECONDS);

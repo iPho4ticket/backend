@@ -11,32 +11,24 @@ spring:
 ---
 spring.config.activate.on-profile: local
 
+server:
+  port: 19096
+
 spring:
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
-      hibernate:
-        format_sql: true
-        show_sql: true
-  h2:
-    console:
-      enabled: true
+      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
 
-storage:
   datasource:
-    core:
-      driver-class-name: org.h2.Driver
-      jdbc-url: jdbc:h2:mem:core;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-      username: sa
-      pool-name: db-payment-pool
-      data-source-properties:
-        rewriteBatchedStatements: true
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: 1234
+    driver-class-name: org.postgresql.Driver
 
 kakao:
   pay:
     secret-key: ${KAKAO_PAY_SECRET_KEY}
 
-ticket:
-  api:
-    url: ${TICKET_API_URL}
+

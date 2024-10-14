@@ -29,6 +29,8 @@ public enum ErrorCode implements ResponseCode, Serializable { //TODO: 공통 모
 	// 비밀번호 불일치
 	PASSWORD_MISMATCH(HttpStatus.UNAUTHORIZED, "A001", "Invalid password"),
 
+	// 유효하지 않은 토큰
+	INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "A002", "Invalid token"),
 	; // End
 
 	/**

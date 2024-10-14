@@ -143,13 +143,29 @@ public class PaymentService {
 
     // 5. 결제 취소
     @Transactional
-    public PaymentResponseDTO cancelPayment(UUID paymentId, Long userId)
+    public ApproveResponse cancelPayment(UUID paymentId, Long userId,  String tid,
+        Integer cancelAmount, Integer cancelTaxFreeAmount, Integer cancelVatAmount)
         throws AccessDeniedException {
         Payment payment = findPaymentAndCheckPermission(paymentId, userId);
         checkPaymentStatus(payment, PaymentStatus.COMPLETED);
+
+        // 티켓과 feign 요청으로 검증하는 로직 추가
+        ValidationResponse validationResponse = clientTicketFeign.checkTicketCancel(payment.getTicketId(), payment.getUserId());
+        if (!validationResponse.success()){
+            throw new IllegalStateException(validationResponse.message());
+        }
+
+        PaymentProcessor processor = paymentProcessorFactory.getPaymentProcessor(payment.getMethod());
+        ApproveResponse approveResponse = processor.cancelPayment(tid, cancelAmount, cancelTaxFreeAmount, cancelVatAmount);
+
         updatePaymentStatus(payment, PaymentStatus.CANCELED);
 
-        return toResponseDTO(payment);
+        ValidationResponse validationPostResponse = clientTicketFeign.changeTicketStatus(payment.getTicketId());
+        if (!validationPostResponse.success()){
+            throw new IllegalStateException(validationResponse.message());
+        }
+
+        return approveResponse;
     }
 
     // Helper method to create new Payment entity

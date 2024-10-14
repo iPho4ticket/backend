@@ -12,6 +12,7 @@ import com.ipho.ticketservice.infrastructure.client.ValidationResponse;
 import com.ipho.ticketservice.presentation.request.TicketRequestDto;
 import com.ipho.ticketservice.presentation.response.TicketResponseDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j(topic = "ticket-service")
 public class TicketService {
 
     private final TicketRepository ticketRepository;
@@ -43,7 +45,7 @@ public class TicketService {
         Ticket ticket = ticketRepository.findByUuidAndStatusNot(ticketId, TicketStatus.CANCELED).orElseThrow(() -> new IllegalArgumentException("not found ticket or already canceled"));
         ticket.cancel();
 
-        eventProducer.publishCancelTicket(ticket.getEventId(), new CancelTicketEvent(ticket.getSeatId(), ticket.getEventId(), ticket.getSeatNumber(), ticket.getPrice()));
+        eventProducer.publishCancelTicket(new CancelTicketEvent(ticket.getSeatId(), ticket.getEventId(), ticket.getSeatNumber(), ticket.getPrice()));
         return TicketResponseDto.cancelTicket(ticket);
     }
 
@@ -53,34 +55,22 @@ public class TicketService {
         if (!ticket.getUserId().equals(userId)) throw new IllegalArgumentException("no authority userId");
 
         return new ValidationResponse(true, "valid ticket");
-        /*
-         * 결제 완료 ( CONFIRMED ) 가 되기 위한 Ticket 의 상태 조건
-
-         * 1. PENDING 상태
-         * 2. expirationTime > current Time
-         * 아직 필드 없음. IsDelete == false
-         */
     }
 
     @Transactional
     public ValidationResponse completePayment(UUID ticketId) {
         Ticket ticket = ticketRepository.findByValidationTicket(ticketId, TicketStatus.PENDING).orElseThrow(() -> new IllegalArgumentException("not found valid ticket by ticketId"));
         ticket.completePayment();
-        return new ValidationResponse(true, "complete payment");
-    }
-
-
-    // 지울 용도 ( 시나리오를 위한 쓰레기 )
-    @Transactional
-    public String pending(UUID ticketId) {
-        Ticket ticket = ticketRepository.findByUuid(ticketId).get();
-        ticket.pending();
-        return "success";
+        return new ValidationResponse(true, ticket.getEventName() + ":" + ticket.getSeatNumber());
     }
 
     @Transactional
-    public void ticketMaking(TicketMakingEvent event) {
-        Ticket ticket = ticketRepository.findByUuid(event.getTicketId()).orElseThrow(() -> new IllegalArgumentException("not found ticket by uuid"));
+    public void handleTicketMaking(TicketMakingEvent event) {
+        Ticket ticket = ticketRepository.findByUuid(event.getTicketId()).orElseThrow(() -> new IllegalArgumentException("not found ticket"));
+        ticket.addEventName(event.getEventName());
         ticket.pending();
+        ticketRepository.save(ticket);
+        log.debug("ticket making: {}", ticket);
     }
+
 }

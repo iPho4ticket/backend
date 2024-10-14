@@ -2,6 +2,8 @@ package com.ticketing.authservice.application.service;
 
 import static com.ticketing.authservice.infrastructure.common.CustomException.*;
 
+import java.util.Map;
+
 import org.springframework.stereotype.Service;
 
 import com.ticketing.authservice.application.dto.UserDto;
@@ -56,5 +58,18 @@ public class AuthService {
 
 		// JWT 토큰 생성
 		return jwtUtil.createToken(user.id(), user.email(), user.role().getAuthority());
+	}
+
+	/**
+	 * JWT 토큰을 검증하는 메서드입니다.
+	 * 전달된 JWT 토큰의 유효성을 확인하고, 유효한 경우 해당 토큰의 클레임 정보를 반환합니다.
+	 *
+	 * @param token 검증할 JWT 토큰
+	 * @return 토큰이 유효한 경우 클레임 정보를 포함한 Map을 반환합니다.
+	 */
+	public Map<String, Object> validateToken(String token) {
+		// 토큰 유효성 검증과 클레임 추출을 한 번에 처리
+		return jwtUtil.validateAndExtractClaims(token)
+			.orElseThrow(() -> new InvalidTokenException(token));
 	}
 }

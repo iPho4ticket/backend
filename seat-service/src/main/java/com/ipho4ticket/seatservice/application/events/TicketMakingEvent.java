@@ -12,7 +12,8 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TicketMakingEvent {
-    private UUID seatId;
+    private UUID ticketId;
+    private String eventName;
     private String seatNumber;
     private BigDecimal price;
 }

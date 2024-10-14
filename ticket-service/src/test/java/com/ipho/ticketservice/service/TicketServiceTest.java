@@ -92,7 +92,6 @@ public class TicketServiceTest {
         TicketMakingEvent event = (TicketMakingEvent) ticketMakingMessage;
         assertThat(event.getTicketId()).isEqualTo(ticket.getUuid());
 
-        ticketRepository.flush();
         assertThat(ticketRepository.findByUuid(ticket.getUuid()).get().getStatus()).isEqualTo(TicketStatus.PENDING);
     }
 
@@ -185,8 +184,6 @@ public class TicketServiceTest {
         ValidationResponse validationResponse = ticketService.completePayment(ticket.getUuid());
         assertThat(validationResponse.success()).isTrue();
         assertThat(validationResponse.message()).isEqualTo(ticket.getEventName() + ":" + ticket.getSeatNumber());
-
-        ticketRepository.flush();
 
         Ticket response = ticketRepository.findByUuid(ticket.getUuid()).get();
         System.out.println("response = " + response);

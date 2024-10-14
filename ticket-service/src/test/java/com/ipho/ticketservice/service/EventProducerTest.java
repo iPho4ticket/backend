@@ -5,7 +5,6 @@ import com.ipho.ticketservice.application.event.dto.SeatBookingEvent;
 import com.ipho.ticketservice.application.event.dto.TicketTopic;
 import com.ipho.ticketservice.application.event.service.EventProducer;
 import com.ipho.ticketservice.infrastructure.messaging.DynamicKafkaListener;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,11 +13,8 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -70,6 +66,5 @@ public class EventProducerTest {
         assertThat(event.getSeatNumber()).isEqualTo("A1");
 
     }
-
 
 }

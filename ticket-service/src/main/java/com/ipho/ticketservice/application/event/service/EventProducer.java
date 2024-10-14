@@ -3,12 +3,9 @@ package com.ipho.ticketservice.application.event.service;
 import com.ipho.ticketservice.application.event.dto.CancelTicketEvent;
 import com.ipho.ticketservice.application.event.dto.SeatBookingEvent;
 import com.ipho.ticketservice.application.event.dto.TicketTopic;
-import com.ipho.ticketservice.infrastructure.messaging.DynamicKafkaListener;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor

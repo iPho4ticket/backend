@@ -58,7 +58,7 @@ public class TicketServiceTest {
         ticketRepository.save(ticket);
 
         dynamicKafkaListener.startListener(TicketTopic.SEAT_BOOKING.getTopic(), requestDto.eventId());
-        eventProducer.publishSeatBookingEvent(new SeatBookingEvent(ticket.getUuid(), ticket.getUserId(), ticket.getEventId(), ticket.getSeatNumber(), ticket.getPrice()));
+        eventProducer.publishSeatBookingEvent(new SeatBookingEvent(ticket.getUuid(), ticket.getEventId(), ticket.getUserId(), ticket.getSeatNumber()));
 
         // seat-service 에서 event 처리 후, ticket-making-{eventId} 로 보냈다고 가정 ( test 환경에서는 직접 받아 값 처리, 메시지는 성공적으로 구독 )
         Thread.sleep(1000);

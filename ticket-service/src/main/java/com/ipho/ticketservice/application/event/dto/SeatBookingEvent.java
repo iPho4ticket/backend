@@ -10,10 +10,8 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SeatBookingEvent {
-
     private UUID ticketId;
-    private Long userId;
     private UUID eventId;
+    private Long userId;
     private String seatNumber;
-    private Double price;
 }

@@ -30,7 +30,7 @@ public class EventProducerTest {
     @DisplayName("(Ticket -> Seat): 좌석 예매 이벤트 발행")
     void publishSeatBookingEvent() throws Exception {
         // 1. 이벤트에 대한 좌석 예매 요청
-        SeatBookingEvent requestEvent = new SeatBookingEvent(UUID.randomUUID(), 1L, UUID.randomUUID(), "A1", 10000.0);
+        SeatBookingEvent requestEvent = new SeatBookingEvent(UUID.randomUUID(), UUID.randomUUID(), 1L, "A1");
         // 2. 동적으로 event 전용 topic 구독
         dynamicKafkaListener.startListener(TicketTopic.SEAT_BOOKING.getTopic(), requestEvent.getEventId());
         // 3. 좌석 예매 메시지 발행

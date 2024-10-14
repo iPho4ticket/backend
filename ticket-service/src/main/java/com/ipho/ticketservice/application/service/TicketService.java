@@ -33,7 +33,7 @@ public class TicketService {
     public TicketResponseDto reservationTicket(TicketRequestDto dto) {
         Ticket ticket = new Ticket(dto.userId(), dto.eventId(), dto.seatNumber(), dto.price());
         ticketRepository.save(ticket);
-        eventProducer.publishSeatBookingEvent(new SeatBookingEvent(ticket.getUuid(), dto.userId(), dto.eventId(), dto.seatNumber(), dto.price()));
+        eventProducer.publishSeatBookingEvent(new SeatBookingEvent(ticket.getUuid(), dto.eventId(), dto.userId(), dto.seatNumber()));
 
         return TicketResponseDto.createTicket(ticket);
     }

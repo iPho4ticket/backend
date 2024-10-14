@@ -62,7 +62,7 @@ public class AuthTokenFilter implements GlobalFilter {
 		}
 
 		// 캐시 미스 시 WebClient를 통해 토큰 검증 및 캐시에 저장
-		return authWebClient.validateToken("Bearer " + token)
+		return authWebClient.validateToken(token)
 			.flatMap(claims -> saveToCacheAndProceed(exchange, chain, claims, token))
 			.onErrorResume(e -> handleTokenValidationFailure(exchange, e, token));
 	}

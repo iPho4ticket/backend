@@ -31,6 +31,11 @@ public class TicketInternalController {
         return ResponseEntity.ok(ticketService.completePayment(ticketId));
     }
 
+    @PostMapping("/{ticket_id}/cancel")
+    public ResponseEntity<ValidationResponse> changeTicketStatusCancel(@PathVariable("ticket_id") UUID ticketId) {
+        return ResponseEntity.ok(ticketService.cancelPayment(ticketId));
+    }
+
     @PostMapping("/subscribe")
     public ResponseEntity<String> subscribe(@RequestParam String topic, @RequestParam UUID eventId) {
         dynamicKafkaListener.startListener(topic, eventId);

@@ -64,6 +64,7 @@ public class TicketService {
     public ValidationResponse completePayment(UUID ticketId) {
         Ticket ticket = ticketRepository.findByValidationTicket(ticketId, TicketStatus.PENDING).orElseThrow(() -> new ValidationException("not found valid ticket by ticketId"));
         ticket.completePayment();
+        // TODO: 결제 완료 시 티켓 상태 변환 후, 좌석에도 알림? 흐름이 맞나 기억이 가물..
         return new ValidationResponse(true, ticket.getEventName() + ":" + ticket.getSeatNumber());
     }
 
@@ -80,6 +81,7 @@ public class TicketService {
     public ValidationResponse cancelPayment(UUID ticketId) {
         Ticket ticket = ticketRepository.findByUuid(ticketId).orElseThrow(() -> new ValidationException("not found ticket"));
         ticket.cancel();
+        eventProducer.publishCancelTicket(new CancelTicketEvent(ticket.getSeatId(), ticket.getEventId(), ticket.getSeatNumber(), ticket.getPrice()));
         return new ValidationResponse(true, "success");
     }
 }

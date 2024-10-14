@@ -160,7 +160,7 @@ public class PaymentService {
 
         updatePaymentStatus(payment, PaymentStatus.CANCELED);
 
-        ValidationResponse validationPostResponse = clientTicketFeign.changeTicketStatus(payment.getTicketId());
+        ValidationResponse validationPostResponse = clientTicketFeign.changeTicketStatusCancel(payment.getTicketId());
         if (!validationPostResponse.success()){
             throw new IllegalStateException(validationResponse.message());
         }
@@ -212,6 +212,7 @@ public class PaymentService {
             .paymentId(payment.getPaymentId())
             .userId(payment.getUserId())
             .ticketId(payment.getTicketId())
+            .tid(payment.getTid())
             .amount(payment.getAmount())
             .method(payment.getMethod())
             .status(payment.getStatus())

@@ -5,6 +5,7 @@ import com.ipho4ticket.clienteventfeign.ClientEventFeign;
 import com.ipho4ticket.clienteventfeign.dto.EventResponseDto;
 import com.ipho4ticket.seatservice.application.config.ConcurrencyControl;
 import com.ipho4ticket.seatservice.application.events.CancelTicketEvent;
+import com.ipho4ticket.seatservice.application.events.ConfirmSeatEvent;
 import com.ipho4ticket.seatservice.application.events.SeatBookingEvent;
 import com.ipho4ticket.seatservice.application.events.TicketMakingEvent;
 import com.ipho4ticket.seatservice.domain.model.Seat;
@@ -165,8 +166,17 @@ public class SeatService {
 
     @Transactional
     public void updateSeatToAvailable(CancelTicketEvent request){
-        Seat seat = getSeatInfo(request.getSeatId());
+        Seat seat = seatRepository.findBySeatNumberAndEventId(request.getSeatNumber(), request.getEventId());
         seat.updateStatus(SeatStatus.AVAILABLE); // 좌석 상태 업데이트
+
+        seatRepository.save(seat); // 상태 업데이트 후 좌석 저장
+        redisTemplate.opsForValue().set(seat.getId().toString(), seat);  // 캐시에 상태 업데이트
+    }
+
+    @Transactional
+    public void updateSeatToSold(ConfirmSeatEvent request){
+        Seat seat = seatRepository.findBySeatNumberAndEventId(request.getSeatNumber(), request.getEventId());
+        seat.updateStatus(SeatStatus.SOLD);
 
         seatRepository.save(seat); // 상태 업데이트 후 좌석 저장
         redisTemplate.opsForValue().set(seat.getId().toString(), seat);  // 캐시에 상태 업데이트

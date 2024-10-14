@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@FeignClient(value = "ticket-api", url = "${ticket.api.url}")
+@FeignClient(value = "ticket-service", url = "http://ticket-service:19095")
 public interface ClientTicketFeign {
 
     // 티켓 상태 및 유저 검증

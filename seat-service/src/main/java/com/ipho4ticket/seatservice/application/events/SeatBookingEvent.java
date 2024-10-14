@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Data
@@ -12,7 +11,7 @@ import java.util.UUID;
 @NoArgsConstructor
 public class SeatBookingEvent {
     private UUID ticketId;
-    private UUID seatId;
+    //private UUID seatId;
     private UUID eventId;
     private Long userId;
     private String seatNumber;

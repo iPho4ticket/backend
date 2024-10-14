@@ -1,6 +1,7 @@
 package com.ipho4ticket.eventservice.application.service;
 
 import com.ipho4ticket.eventservice.application.dto.EventResponseDto;
+import com.ipho4ticket.eventservice.application.kevents.EventMakingEvent;
 import com.ipho4ticket.eventservice.domain.model.Event;
 import com.ipho4ticket.eventservice.domain.model.QEvent;
 import com.ipho4ticket.eventservice.domain.repository.EventRepository;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -18,13 +20,28 @@ import java.util.UUID;
 public class EventService {
 
     private final EventRepository eventRepository;
+    private final EventProducer eventProducer;
 
+    // 이벤트 생성
+    @Transactional
     public EventResponseDto createEvent(EventRequestDto request) {
         Event event=new Event(request.title(),request.description(),request.date(),request.startTime(),request.endTime());
         eventRepository.save(event);
+
+        String topic = "event-making";
+        eventProducer.publishEventMakingEvent(new EventMakingEvent(
+                event.getEventId(),
+                event.getTitle(),
+                event.getDescription(),
+                event.getDate(),
+                event.getStartTime(),
+                event.getEndTime(),
+                topic
+        ));
         return toResponseDTO(event);
     }
 
+    // 이벤트 검색
     public Page<EventResponseDto> searchEvents(String title, String description, Pageable pageable) {
         QEvent qEvent = QEvent.event;
 
@@ -43,6 +60,8 @@ public class EventService {
         return events.map(this::toResponseDTO);
     }
 
+    // 이벤트 수정
+    @Transactional
     public EventResponseDto updateEvent(UUID id, EventRequestDto request) {
         Event event=eventRepository.findById(id)
                 .orElseThrow(()->new IllegalArgumentException(id+"는 찾을 수 없는 이벤트 아이디입니다."));

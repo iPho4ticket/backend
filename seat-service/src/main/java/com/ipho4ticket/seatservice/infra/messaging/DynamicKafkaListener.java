@@ -2,6 +2,7 @@ package com.ipho4ticket.seatservice.infra.messaging;
 
 
 import com.ipho4ticket.seatservice.application.events.CancelTicketEvent;
+import com.ipho4ticket.seatservice.application.events.ConfirmSeatEvent;
 import com.ipho4ticket.seatservice.application.events.SeatBookingEvent;
 import com.ipho4ticket.seatservice.application.service.SeatService;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,9 @@ public class DynamicKafkaListener implements MessageListener<String, Object> {
         }else if(record.topic().startsWith("cancel-ticket")) {
             CancelTicketEvent event=(CancelTicketEvent) record.value();
             seatService.updateSeatToAvailable(event);
+        }else if(record.topic().startsWith("confirm-seat")){
+            ConfirmSeatEvent event=(ConfirmSeatEvent) record.value();
+            seatService.updateSeatToSold(event);
         }
     }
 }

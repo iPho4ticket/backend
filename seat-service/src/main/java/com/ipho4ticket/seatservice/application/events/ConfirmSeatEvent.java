@@ -9,7 +9,7 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CancelTicketEvent {
+public class ConfirmSeatEvent {
     private UUID eventId;
     private String seatNumber;
     private Double price;

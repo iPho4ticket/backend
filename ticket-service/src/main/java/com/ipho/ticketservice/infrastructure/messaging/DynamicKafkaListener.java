@@ -1,6 +1,12 @@
 package com.ipho.ticketservice.infrastructure.messaging;
 
 
+import com.ipho.ticketservice.application.event.dto.TicketMakingEvent;
+import com.ipho.ticketservice.application.event.dto.TicketTopic;
+import com.ipho.ticketservice.application.service.TicketService;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
@@ -11,20 +17,22 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 @Component
-public class DynamicKafkaListener implements MessageListener<String, String> {
+@RequiredArgsConstructor
+@Slf4j(topic = "dynamic-kafka-listener")
+public class DynamicKafkaListener implements MessageListener<String, Object> {
 
     private final KafkaListenerEndpointRegistry endpointRegistry;
     private final ConcurrentKafkaListenerContainerFactory<String, String> factory;
+    private final TicketService ticketService;
 
-    public DynamicKafkaListener(KafkaListenerEndpointRegistry endpointRegistry,
-                                ConcurrentKafkaListenerContainerFactory<String, String> factory) {
-        this.endpointRegistry = endpointRegistry;
-        this.factory = factory;
-    }
+    @Getter
+    private Object receivedMessage;
+
 
     public void startListener(String topic, UUID uuid) {
-        String listenerId = topic + "-" + uuid;
 
+        log.debug("register Listener: {}, {}", topic, uuid);
+        String listenerId = topic + "-" + uuid;
         CustomKafkaListenerEndpoint endpoint = new CustomKafkaListenerEndpoint(listenerId, listenerId, this);
 
         endpointRegistry.registerListenerContainer(endpoint, factory);
@@ -33,7 +41,17 @@ public class DynamicKafkaListener implements MessageListener<String, String> {
 
     @Override
     @Async
-    public void onMessage(ConsumerRecord<String, String> record) {
-        System.out.printf("Received message: key = %s, value = %s%n", record.key(), record.value());
+    public void onMessage(ConsumerRecord<String, Object> record) {
+        log.debug("Received message: key = {}, value = {}", record.key(), record.value());
+
+        log.debug("record.topic() = {}", record.topic());
+        log.debug("record.value() = {}", record.value());
+        this.receivedMessage = record.value();
+
+        if (record.topic().startsWith(TicketTopic.TICKET_MAKING.getTopic())) {
+
+            TicketMakingEvent event = (TicketMakingEvent) record.value();
+            ticketService.handleTicketMaking(event);
+        }
     }
 }

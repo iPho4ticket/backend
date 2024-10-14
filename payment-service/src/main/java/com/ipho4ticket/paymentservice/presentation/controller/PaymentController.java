@@ -131,12 +131,4 @@ public class PaymentController {
         return ResponseEntity.ok(payments);
     }
 
-//    // 5. 결제 취소 (DELETE)
-//    @DeleteMapping("/{payment_id}")
-//    public ResponseEntity<PaymentResponseDTO> cancelPayment(@PathVariable UUID payment_id)
-//        throws AccessDeniedException {
-//
-//        PaymentResponseDTO payment = paymentService.cancelPayment(payment_id, exampleUserId);
-//        return ResponseEntity.ok(payment);
-//    }
 }

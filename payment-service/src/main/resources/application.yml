@@ -31,6 +31,4 @@ kakao:
   pay:
     secret-key: ${KAKAO_PAY_SECRET_KEY}
 
-ticket:
-  api:
-    url: ${TICKET_API_URL}
+

@@ -80,4 +80,20 @@ public class CustomException extends RuntimeException {
 				String.format("Password mismatch for User UUID (%s)", userId.toString()));
 		}
 	}
+
+	/**
+	 * JWT 토큰이 유효하지 않을 때 발생하는 예외 클래스입니다.
+	 */
+	@Getter
+	public static class InvalidTokenException extends CustomException {
+
+		/**
+		 * 토큰이 유효하지 않을 때 발생하는 예외.
+		 *
+		 * @param token 유효하지 않은 JWT 토큰
+		 */
+		public InvalidTokenException(String token) {
+			super(ErrorCode.INVALID_TOKEN, String.format("Invalid token: %s", token));
+		}
+	}
 }

@@ -1,5 +1,6 @@
 package com.ticketing.authservice.application.service;
 
+import static com.ticketing.authservice.infrastructure.common.CustomException.*;
 import static com.ticketing.authservice.infrastructure.helper.ArbitraryUserFactory.*;
 import static com.ticketing.authservice.infrastructure.helper.util.ArbitraryField.*;
 import static org.hamcrest.MatcherAssert.*;
@@ -7,6 +8,8 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.*;
+
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +20,6 @@ import org.mockito.Mock;
 import com.ticketing.authservice.application.dto.UserDto;
 import com.ticketing.authservice.application.mapper.AuthDataMapper;
 import com.ticketing.authservice.infrastructure.client.UserFeignService;
-import com.ticketing.authservice.infrastructure.common.CustomException.PasswordMismatchException;
 import com.ticketing.authservice.infrastructure.security.BCryptUtil;
 import com.ticketing.authservice.infrastructure.security.JwtUtil;
 
@@ -92,5 +94,38 @@ class AuthServiceTest {
 		// When & Then: 비밀번호 불일치로 예외 발생
 		assertThrows(PasswordMismatchException.class, () -> authService.login(loginDto));
 		verify(userFeignService, times(1)).readUserByEmail(loginDto.email());
+	}
+
+	/**
+	 * 유효한 JWT 토큰을 검증하고, 클레임 정보를 반환하는지 테스트합니다.
+	 */
+	@Test
+	@DisplayName("유효한 JWT 토큰 검증 및 클레임 정보 반환")
+	void validateToken_withValidToken_returnsClaims() {
+		// Given: 유효한 JWT 토큰과 클레임 정보 생성
+		String validToken = jwtUtil.createToken(USER_ID, USER_EMAIL, USER_ROLE.getAuthority());
+
+		// When: 토큰 검증 처리
+		Map<String, Object> claims = authService.validateToken(validToken);
+
+		// Then: 클레임 정보가 성공적으로 반환되었는지 확인
+		assertThat(claims.get("sub"), is(USER_ID.toString()));
+		assertThat(claims.get("email"), is(USER_EMAIL));
+		assertThat(claims.get("role"), is(USER_ROLE.getAuthority()));
+		// iat, exp 등은 검증하지 않음
+	}
+
+	/**
+	 * 유효하지 않은 JWT 토큰을 검증할 때 {@code InvalidTokenException}이
+	 * 발생하는지 테스트합니다.
+	 */
+	@Test
+	@DisplayName("유효하지 않은 JWT 토큰 검증시 예외 발생")
+	void validateToken_withInvalidToken_throwsInvalidTokenException() {
+		// Given: 유효하지 않은 JWT 토큰
+		String invalidToken = "invalidToken";
+
+		// When & Then: InvalidTokenException 발생 여부 확인
+		assertThrows(InvalidTokenException.class, () -> authService.validateToken(invalidToken));
 	}
 }

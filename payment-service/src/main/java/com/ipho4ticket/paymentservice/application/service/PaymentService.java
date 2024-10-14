@@ -60,7 +60,7 @@ public class PaymentService {
 
         try {
             // 3. 외부 결제 API 호출 (카카오페이, PayPal 등)
-            ReadyResponse readyResponse = processor.payReady("1", payment.getAmount(), request.ticketId(), payment.getPaymentId());
+            ReadyResponse readyResponse = processor.payReady(validationResponse.message(), payment.getAmount(), request.ticketId(), payment.getPaymentId());
 
             // 외부 결제가 성공적으로 준비된 경우, TID 저장 및 상태 업데이트
             payment.setTid(readyResponse.getTid());

@@ -5,7 +5,6 @@ import com.ipho.ticketservice.domain.model.Ticket;
 import com.ipho.ticketservice.domain.model.TicketStatus;
 import org.springframework.data.jpa.repository.Query;
 
-import java.sql.Timestamp;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,9 +15,5 @@ public interface TicketRepository {
 
     @Query("select t from Ticket t where t.uuid = :id and t.status = :status and t.expirationTime > CURRENT TIMESTAMP ")
     Optional<Ticket> findByValidationTicket(UUID id, TicketStatus status);
-
-    void flush();
-
-
 
 }

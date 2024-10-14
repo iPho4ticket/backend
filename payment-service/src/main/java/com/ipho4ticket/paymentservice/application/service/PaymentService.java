@@ -162,7 +162,7 @@ public class PaymentService {
 
         ValidationResponse validationPostResponse = clientTicketFeign.changeTicketStatusCancel(payment.getTicketId());
         if (!validationPostResponse.success()){
-            throw new IllegalStateException(validationResponse.message());
+            throw new IllegalStateException(validationPostResponse.message());
         }
 
         return approveResponse;

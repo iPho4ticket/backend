@@ -4,15 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TicketMakingEvent {
-    private UUID ticketId;
-    private String eventName;
+public class CancelTicketEvent {
+    private UUID seatId;
+    private UUID eventId;
     private String seatNumber;
-    private BigDecimal price;
+    private Double price;
 }

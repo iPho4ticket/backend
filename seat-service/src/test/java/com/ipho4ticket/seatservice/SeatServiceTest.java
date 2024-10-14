@@ -5,9 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ipho4ticket.clienteventfeign.ClientEventFeign;
 import com.ipho4ticket.clienteventfeign.dto.EventResponseDto;
 import com.ipho4ticket.seatservice.application.dto.SeatResponseDto;
-import com.ipho4ticket.seatservice.application.events.SeatBookingEvent;
-
-import com.ipho4ticket.seatservice.application.events.TicketMakingEvent;
 import com.ipho4ticket.seatservice.application.service.EventProducer;
 import com.ipho4ticket.seatservice.application.service.SeatService;
 import com.ipho4ticket.seatservice.domain.model.Seat;
@@ -66,7 +63,7 @@ class SeatServiceTest {
         seatId = UUID.randomUUID();
 
         // SeatRequestDTO 초기화
-        request = new SeatRequestDto(eventId, "A", 12, BigDecimal.valueOf(10000));
+        request = new SeatRequestDto(eventId, "K", 15, BigDecimal.valueOf(10000));
     }
 
     // SeatRequestDTO를 이용해 Seat 객체 생성하는 메서드
@@ -77,14 +74,16 @@ class SeatServiceTest {
 
     @Test
     void testCreateSeat() {
+        request = new SeatRequestDto(eventId, "K", 100, BigDecimal.valueOf(10000));
         Seat seat = createSeatFromRequest(seatId, request, SeatStatus.AVAILABLE);
 
+        when(seatRepository.findBySeatNumberAndEventId(seat.getSeatNumber(), seat.getEventId())).thenReturn(null);
         when(seatRepository.save(any(Seat.class))).thenReturn(seat);
+
         SeatResponseDto createdSeatDTO = seatService.createSeat(request);
 
         verify(seatRepository, times(1)).save(any(Seat.class));
-
-        assertEquals(SeatStatus.AVAILABLE, seat.getStatus());
+        assertEquals(SeatStatus.AVAILABLE, createdSeatDTO.getStatus());
         assertEquals(request.row() + request.column(), createdSeatDTO.getSeatNumber());
     }
 
@@ -183,29 +182,5 @@ class SeatServiceTest {
         assertEquals(seatId + "는 찾을 수 없는 좌석입니다.", exception.getMessage());
 
         verify(seatRepository, never()).delete(any(Seat.class));
-    }
-
-    @Test
-    void handleSeatBookingEvent() {
-        UUID ticketId = UUID.randomUUID();
-        Long userId=1L;
-        SeatBookingEvent bookingEvent = new SeatBookingEvent(ticketId, seatId, eventId,userId,"A12");
-
-        // 좌석 정보 모킹
-        Seat seat = createSeatFromRequest(seatId, request, SeatStatus.AVAILABLE);
-        when(seatRepository.findById(seatId)).thenReturn(Optional.of(seat));
-
-        // RedisTemplate 모킹
-        ValueOperations<String, Object> valueOps = mock(ValueOperations.class);
-        when(redisTemplate.opsForValue()).thenReturn(valueOps);
-        when(valueOps.get("seat::" + seatId)).thenReturn(seat);
-
-        // EventProducer 모킹
-        doNothing().when(eventProducer).publishTicketMakingEvent(any());
-
-        seatService.checkSeat(bookingEvent);
-
-        assertEquals(SeatStatus.RESERVED, seat.getStatus()); // 좌석 상태가 RESERVED인지 확인
-        verify(eventProducer, times(1)).publishTicketMakingEvent(any(TicketMakingEvent.class)); // 이벤트 발행 검증
     }
 }

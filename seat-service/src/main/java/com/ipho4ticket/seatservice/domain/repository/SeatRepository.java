@@ -9,4 +9,6 @@ import java.util.UUID;
 
 public interface SeatRepository extends JpaRepository<Seat, UUID> {
     Page<Seat> findByEventId(UUID eventId, Pageable pageable);
+
+    Seat findBySeatNumberAndEventId(String seatNumber, UUID eventId);
 }

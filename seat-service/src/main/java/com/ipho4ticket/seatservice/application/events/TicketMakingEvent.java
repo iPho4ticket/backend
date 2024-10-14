@@ -1,6 +1,5 @@
 package com.ipho4ticket.seatservice.application.events;
 
-import com.ipho4ticket.seatservice.domain.model.SeatStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

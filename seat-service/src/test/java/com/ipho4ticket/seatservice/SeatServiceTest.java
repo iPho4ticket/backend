@@ -63,7 +63,7 @@ class SeatServiceTest {
         seatId = UUID.randomUUID();
 
         // SeatRequestDTO 초기화
-        request = new SeatRequestDto(eventId, "A", 12, BigDecimal.valueOf(10000));
+        request = new SeatRequestDto(eventId, "K", 15, BigDecimal.valueOf(10000));
     }
 
     // SeatRequestDTO를 이용해 Seat 객체 생성하는 메서드
@@ -74,14 +74,16 @@ class SeatServiceTest {
 
     @Test
     void testCreateSeat() {
+        request = new SeatRequestDto(eventId, "K", 100, BigDecimal.valueOf(10000));
         Seat seat = createSeatFromRequest(seatId, request, SeatStatus.AVAILABLE);
 
+        when(seatRepository.findBySeatNumberAndEventId(seat.getSeatNumber(), seat.getEventId())).thenReturn(null);
         when(seatRepository.save(any(Seat.class))).thenReturn(seat);
+
         SeatResponseDto createdSeatDTO = seatService.createSeat(request);
 
         verify(seatRepository, times(1)).save(any(Seat.class));
-
-        assertEquals(SeatStatus.AVAILABLE, seat.getStatus());
+        assertEquals(SeatStatus.AVAILABLE, createdSeatDTO.getStatus());
         assertEquals(request.row() + request.column(), createdSeatDTO.getSeatNumber());
     }
 
@@ -180,33 +182,5 @@ class SeatServiceTest {
         assertEquals(seatId + "는 찾을 수 없는 좌석입니다.", exception.getMessage());
 
         verify(seatRepository, never()).delete(any(Seat.class));
-    }
-
-    @Test
-    void testChangeSeatToSold() {
-        ValueOperations<String, Object> valueOps = mock(ValueOperations.class);
-        when(redisTemplate.opsForValue()).thenReturn(valueOps);
-
-        Seat seat = createSeatFromRequest(seatId, request, SeatStatus.RESERVED);
-        when(seatRepository.findById(seatId)).thenReturn(Optional.of(seat));
-
-        seatService.ChangeSeatToSold(seatId);
-
-        assertEquals(SeatStatus.SOLD, seat.getStatus());
-        verify(seatRepository, times(1)).save(seat);
-    }
-
-    @Test
-    void testChangeSeatToAvailable() {
-        ValueOperations<String, Object> valueOps = mock(ValueOperations.class);
-        when(redisTemplate.opsForValue()).thenReturn(valueOps);
-
-        Seat seat = createSeatFromRequest(seatId, request, SeatStatus.RESERVED);
-        when(seatRepository.findById(seatId)).thenReturn(Optional.of(seat));
-
-        seatService.ChangeSeatToAvailable(seatId);
-
-        assertEquals(SeatStatus.AVAILABLE, seat.getStatus());
-        verify(seatRepository, times(1)).save(seat);
     }
 }

@@ -4,7 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ipho4ticket.clienteventfeign.ClientEventFeign;
 import com.ipho4ticket.clienteventfeign.dto.EventResponseDto;
 import com.ipho4ticket.seatservice.application.config.ConcurrencyControl;
-import com.ipho4ticket.seatservice.application.events.NoticePaymentEvent;
+import com.ipho4ticket.seatservice.application.events.CancelTicketEvent;
+import com.ipho4ticket.seatservice.application.events.SeatBookingEvent;
 import com.ipho4ticket.seatservice.application.events.TicketMakingEvent;
 import com.ipho4ticket.seatservice.domain.model.Seat;
 import com.ipho4ticket.seatservice.domain.model.SeatStatus;
@@ -43,12 +44,16 @@ public class SeatService {
         // 행 값+열 값 -> 좌석 생성
         Seat seat=new Seat(request.eventId(),request.row(),request.column(),request.price());
 
+        if (seatRepository.findBySeatNumberAndEventId(seat.getSeatNumber(), seat.getEventId())!=null) {
+            throw new IllegalArgumentException(seat.getSeatNumber() + "는 이미 등록된 좌석입니다.");
+        }
         // 좌석 상태 변경 - 판매가능
         seat.updateStatus(SeatStatus.AVAILABLE);
 
         seatRepository.save(seat);
         return toResponseDTO(seat);
     }
+
 
     /**
      * 좌석 전체 조회 시(seatId가 key),
@@ -58,7 +63,7 @@ public class SeatService {
     public Map<String, Object> getAllSeats(UUID eventId, Pageable pageable) {
 
         // 관련 event 조회
-        // EventResponseDto event=clientEventFeign.getEvent(eventId);
+        EventResponseDto event=clientEventFeign.getEvent(eventId);
 
         // Redis에서 데이터 조회
         Page<SeatResponseDto> seatsPage;
@@ -125,48 +130,50 @@ public class SeatService {
     }
 
     /**
-     * 1. seat에서 좌석 생성 요청
-     * 2. publishTicketMakingEvent 발행
+     * 좌석 예약 요청 -> 좌석 체크 후 감소 -> 티켓 생성 요청
+     * 이 과정은 동기적으로 처리해야되지 않을까,,,
      */
-    @SneakyThrows
     @Transactional
-    public SeatResponseDto makeTicket(UUID seatId) {
-        Seat seat=getSeatInfo(seatId);
+    public void checkSeat(SeatBookingEvent request) {
+        EventResponseDto event=clientEventFeign.getEvent(request.getEventId());
 
-        // 좌석 상태가 AVAILABLE인지 확인 후 처리
-        if (!seat.getStatus().equals(SeatStatus.AVAILABLE)) {
-            throw new IllegalStateException(seatId + "는 이미 예약된 좌석입니다.");
+        Seat seat = seatRepository.findBySeatNumberAndEventId(request.getSeatNumber(), request.getEventId());
+
+        if (seat==null) {
+            throw new IllegalArgumentException(request.getSeatNumber() + "는 찾을 수 없는 좌석입니다.");
         }
-        eventProducer.publishTicketMakingEvent(new TicketMakingEvent(seat.getId(),seat.getSeatNumber(),seat.getPrice())); // 이벤트 발행
 
-        // 좌석 데이터를 응답 DTO로 변환하여 반환
-        return toResponseDTO(seat);
+        if (seat.getStatus().equals(SeatStatus.AVAILABLE)) {
+            // 구매 가능하다면 상태 변경
+            updateSeatToReserved(seat);
+            eventProducer.publishTicketMakingEvent(new TicketMakingEvent(request.getTicketId(),event.title(),request.getSeatNumber(),seat.getPrice()));
+        }
     }
 
-    @ConcurrencyControl(lockName = "ChangeSeatToSold")
-    public void ChangeSeatToSold(UUID seatId) {
-        Seat seat=getSeatInfo(seatId);
+    @ConcurrencyControl(lockName = "ChangeSeatToReserved")
+    public void updateSeatToReserved(Seat seat){
+        seat.updateStatus(SeatStatus.RESERVED); // 좌석 상태 업데이트
 
-        // 좌석 상태가 RESERVED인지 확인 후 처리
-        if (!seat.getStatus().equals(SeatStatus.RESERVED)) {
-            throw new IllegalStateException(seatId + "는 이미 판매된 좌석입니다.");
-        }
-
-        seat.updateStatus(SeatStatus.SOLD); // 좌석 상태 업데이트
+        /**
+         * DB업데이트 + Redis 업데이트
+         * - 분산 트랜잭션
+         * - DB와 redis 둘 다 수정 : Write-Through 전략으로 비동기적 저장
+         */
         seatRepository.save(seat); // 상태 업데이트 후 좌석 저장
-        eventProducer.publishNoticePaymentEvent(new NoticePaymentEvent("좌석 결제 요청")); // 결제 요청 이벤트 발행
+        redisTemplate.opsForValue().set(seat.getId().toString(), seat);  // 캐시에 상태 업데이트
     }
 
-    @ConcurrencyControl(lockName = "ChangeSeatToAvailable")
-    public void ChangeSeatToAvailable(UUID seatId) {
-        Seat seat=getSeatInfo(seatId);
+    @Transactional
+    public void updateSeatToAvailable(CancelTicketEvent request){
+        Seat seat = getSeatInfo(request.getSeatId());
+        seat.updateStatus(SeatStatus.AVAILABLE); // 좌석 상태 업데이트
 
-        // 좌석 상태가 RESERVED인지 확인 후 처리
-        if (seat.getStatus().equals(SeatStatus.RESERVED)) {
-            seat.updateStatus(SeatStatus.AVAILABLE); // 좌석 상태 업데이트
-            seatRepository.save(seat); // 상태 업데이트 후 좌석 저장
-        }
+        seatRepository.save(seat); // 상태 업데이트 후 좌석 저장
+        redisTemplate.opsForValue().set(seat.getId().toString(), seat);  // 캐시에 상태 업데이트
     }
+
+
+
 
     public Seat getSeatInfo(UUID seatId){
         // Redis에서 좌석 데이터 조회

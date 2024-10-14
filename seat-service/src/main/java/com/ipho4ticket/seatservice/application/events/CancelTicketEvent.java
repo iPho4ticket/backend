@@ -9,8 +9,9 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CancelPaymentEvent {
-    // 변경 필요
-    private UUID ticketId;
+public class CancelTicketEvent {
     private UUID seatId;
+    private UUID eventId;
+    private String seatNumber;
+    private Double price;
 }

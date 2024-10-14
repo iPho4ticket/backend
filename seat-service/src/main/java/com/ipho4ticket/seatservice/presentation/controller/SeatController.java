@@ -30,17 +30,6 @@ public class SeatController {
         return ResponseEntity.status(HttpStatus.CREATED).body(seat);
     }
 
-    /**
-     *
-     * 모든 동작에 좌석 예약이 선행돼야할 것 같아 추가했습니다.
-     */
-    // 예약할 좌석 선택
-    @PostMapping("/select/{seat_id}")
-    public ResponseEntity<SeatResponseDto> selectSeat(@PathVariable("seat_id") UUID seat_id){
-        SeatResponseDto seat=seatService.makeTicket(seat_id);
-        return ResponseEntity.ok(seat);
-    }
-
     // 이벤트 좌석 전체 조회
     @GetMapping("/events/{event_id}")
     public ResponseEntity<Map<String, Object>> getAllSeats(

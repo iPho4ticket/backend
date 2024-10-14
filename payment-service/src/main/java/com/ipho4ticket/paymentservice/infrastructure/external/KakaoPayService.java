@@ -1,6 +1,7 @@
 package com.ipho4ticket.paymentservice.infrastructure.external;
 
 import com.ipho4ticket.paymentservice.application.dto.ApproveResponse;
+import com.ipho4ticket.paymentservice.application.dto.PaymentInfoResponse;
 import com.ipho4ticket.paymentservice.application.dto.ReadyResponse;
 import com.ipho4ticket.paymentservice.domain.service.PaymentProcessor;
 import java.math.BigDecimal;
@@ -62,6 +63,55 @@ public class KakaoPayService implements PaymentProcessor {
         ApproveResponse approveResponse = template.postForObject(url, requestEntity, ApproveResponse.class);
 
         return approveResponse;
+    }
+
+
+    // 결제 정보 조회
+    public PaymentInfoResponse getPaymentInfo(String tid) {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("cid", "TC0ONETIME");  // 가맹점 코드
+        parameters.put("tid", tid);           // 결제 고유번호
+
+        HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(parameters, getHeaders());
+
+        RestTemplate template = new RestTemplate();
+        String url = "https://open-api.kakaopay.com/online/v1/payment/order";  // 결제 조회 API URL
+
+        // 응답 상태 코드와 본문을 확인하여 오류 디버깅
+        ResponseEntity<PaymentInfoResponse> responseEntity = template.postForEntity(url, requestEntity, PaymentInfoResponse.class);
+        System.out.println("Response Status Code: " + responseEntity.getStatusCode());
+
+        PaymentInfoResponse body = responseEntity.getBody();
+        if (body == null) {
+            System.out.println("Response Body is null");
+        } else {
+            System.out.println("Response Body: " + body.toString());
+        }
+
+        return body;
+    }
+
+
+    // 결제 취소
+    @Override
+    public ApproveResponse cancelPayment(String tid, Integer cancelAmount, Integer cancelTaxFreeAmount, Integer cancelVatAmount) {
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("cid", "TC0ONETIME");  // 가맹점 코드
+        parameters.put("tid", tid);           // 결제 고유번호
+        parameters.put("cancel_amount", cancelAmount);             // 취소 금액
+        // cancelTaxFreeAmount가 null인 경우 기본값으로 0을 할당
+        parameters.put("cancel_tax_free_amount", cancelTaxFreeAmount != null ? cancelTaxFreeAmount : BigDecimal.ZERO);
+
+        // 부가세 금액 처리
+        parameters.put("cancel_vat_amount", cancelVatAmount != null ? cancelVatAmount : BigDecimal.ZERO);
+
+        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(parameters, getHeaders());
+
+        RestTemplate template = new RestTemplate();
+        String url = "https://open-api.kakaopay.com/online/v1/payment/cancel";  // 결제 취소 API URL
+        ResponseEntity<ApproveResponse> responseEntity = template.postForEntity(url, requestEntity, ApproveResponse.class);
+
+        return responseEntity.getBody();
     }
 
     // 카카오페이 API 호출 시 필요한 헤더 생성

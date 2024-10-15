@@ -16,4 +16,7 @@ public interface TicketRepository {
     @Query("select t from Ticket t where t.uuid = :id and t.status = :status and t.expirationTime > CURRENT TIMESTAMP ")
     Optional<Ticket> findByValidationTicket(UUID id, TicketStatus status);
 
+    @Query("select t from Ticket t where t.uuid = :id and t.status != :status and t.expirationTime > CURRENT TIMESTAMP ")
+    Optional<Ticket> findByValidationCancelTicket(UUID id, TicketStatus status);
+
 }

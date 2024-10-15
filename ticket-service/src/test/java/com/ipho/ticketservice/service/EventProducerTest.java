@@ -50,7 +50,7 @@ public class EventProducerTest {
     @DisplayName("(Ticket -> Seat): 티켓 취소 이벤트 발행")
     void publishCancelTicket() throws Exception {
         // 1. 이벤트에 대한 좌석 취소 요청
-        CancelTicketEvent requestEvent = new CancelTicketEvent(UUID.randomUUID(), UUID.randomUUID(), "A1", 10000.0);
+        CancelTicketEvent requestEvent = new CancelTicketEvent(UUID.randomUUID(), "A1", 10000.0);
         // 2. 동적으로 event 전용 topic 구독
         dynamicKafkaListener.startListener(TicketTopic.CANCEL_TICKET.getTopic(), requestEvent.getEventId());
         // 3. 좌석 취소 메시지 발행

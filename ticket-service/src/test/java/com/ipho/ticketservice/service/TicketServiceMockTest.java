@@ -1,6 +1,7 @@
 package com.ipho.ticketservice.service;
 
 import com.ipho.ticketservice.application.dto.TicketInfoDto;
+import com.ipho.ticketservice.infrastructure.client.SeatClientService;
 import com.ipho.ticketservice.presentation.request.TicketRequestDto;
 import com.ipho.ticketservice.presentation.response.TicketResponseDto;
 import com.ipho.ticketservice.application.event.dto.CancelTicketEvent;
@@ -32,12 +33,12 @@ public class TicketServiceMockTest {
     private TicketService ticketService;
     private TicketRepository ticketRepository;
     private EventProducer eventProducer;
-
+    private SeatClientService seatClientService;
     @BeforeEach
     void setUp() {
         ticketRepository = mock(TicketRepository.class);
         eventProducer = mock(EventProducer.class);
-        ticketService = new TicketService(ticketRepository, eventProducer);
+        ticketService = new TicketService(ticketRepository, eventProducer, seatClientService);
     }
 
     @Test

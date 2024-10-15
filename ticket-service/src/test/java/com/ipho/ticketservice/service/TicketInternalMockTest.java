@@ -5,7 +5,8 @@ import com.ipho.ticketservice.application.service.TicketService;
 import com.ipho.ticketservice.domain.model.Ticket;
 import com.ipho.ticketservice.domain.model.TicketStatus;
 import com.ipho.ticketservice.domain.repository.TicketRepository;
-import com.ipho.ticketservice.infrastructure.client.ValidationResponse;
+import com.ipho.ticketservice.infrastructure.client.SeatClientService;
+import com.ipho.ticketservice.presentation.response.ValidationResponse;
 import com.ipho.ticketservice.presentation.exception.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,12 +30,13 @@ public class TicketInternalMockTest {
     private TicketService ticketService;
     private TicketRepository ticketRepository;
     private EventProducer eventProducer;
+    private SeatClientService seatClientService;
 
     @BeforeEach
     void setUp() {
         ticketRepository = mock(TicketRepository.class);
         eventProducer = mock(EventProducer.class);
-        ticketService = new TicketService(ticketRepository, eventProducer);
+        ticketService = new TicketService(ticketRepository, eventProducer, seatClientService);
     }
 
     @Test

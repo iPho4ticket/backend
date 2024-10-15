@@ -28,7 +28,6 @@ public class DynamicKafkaListener implements MessageListener<String, Object> {
     @Getter
     private Object receivedMessage;
 
-
     public void startListener(String topic, UUID uuid) {
 
         log.debug("register Listener: {}, {}", topic, uuid);

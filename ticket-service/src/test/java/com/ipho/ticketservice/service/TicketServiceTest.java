@@ -10,7 +10,7 @@ import com.ipho.ticketservice.application.service.TicketService;
 import com.ipho.ticketservice.domain.model.Ticket;
 import com.ipho.ticketservice.domain.model.TicketStatus;
 import com.ipho.ticketservice.domain.repository.TicketRepository;
-import com.ipho.ticketservice.infrastructure.client.ValidationResponse;
+import com.ipho.ticketservice.presentation.response.ValidationResponse;
 import com.ipho.ticketservice.infrastructure.messaging.DynamicKafkaListener;
 import com.ipho.ticketservice.presentation.request.TicketRequestDto;
 import com.ipho.ticketservice.presentation.response.TicketResponseDto;
@@ -135,7 +135,7 @@ public class TicketServiceTest {
         dynamicKafkaListener.startListener(TicketTopic.CANCEL_TICKET.getTopic(), requestDto.eventId());
         try {
             SendResult<String, Object> result = kafkaTemplate.send(TicketTopic.CANCEL_TICKET.getTopic() + "-" + requestDto.eventId(),
-                    new CancelTicketEvent(ticket.getSeatId(), ticket.getEventId(), ticket.getSeatNumber(), ticket.getPrice())).get();
+                    new CancelTicketEvent(ticket.getEventId(), ticket.getSeatNumber(), ticket.getPrice())).get();
             System.out.println("Message sent successfully to topic: " + result.getRecordMetadata().topic());
             System.out.println("result = " + result.getRecordMetadata().toString());
 
@@ -151,7 +151,6 @@ public class TicketServiceTest {
         assertThat(cancelTicketMessage).isInstanceOf(CancelTicketEvent.class);
         CancelTicketEvent event = (CancelTicketEvent) cancelTicketMessage;
         assertThat(event.getEventId()).isEqualTo(ticket.getEventId());
-        assertThat(event.getSeatId()).isEqualTo(ticket.getSeatId());
     }
 
     @Test

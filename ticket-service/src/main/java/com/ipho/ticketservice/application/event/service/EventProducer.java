@@ -1,6 +1,7 @@
 package com.ipho.ticketservice.application.event.service;
 
 import com.ipho.ticketservice.application.event.dto.CancelTicketEvent;
+import com.ipho.ticketservice.application.event.dto.ConfirmSeatEvent;
 import com.ipho.ticketservice.application.event.dto.SeatBookingEvent;
 import com.ipho.ticketservice.application.event.dto.TicketTopic;
 import lombok.RequiredArgsConstructor;
@@ -19,5 +20,9 @@ public class EventProducer {
 
     public void publishCancelTicket(CancelTicketEvent event) {
         kafkaTemplate.send(TicketTopic.CANCEL_TICKET.getTopic() + "-" + event.getEventId(), event);
+    }
+
+    public void publishConfirmSeat(ConfirmSeatEvent event) {
+        kafkaTemplate.send(TicketTopic.CONFIRM_SEAT.getTopic() + "-" + event.getEventId(), event);
     }
 }

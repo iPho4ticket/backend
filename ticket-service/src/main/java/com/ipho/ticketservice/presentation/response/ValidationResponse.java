@@ -1,4 +1,4 @@
-package com.ipho.ticketservice.infrastructure.client;
+package com.ipho.ticketservice.presentation.response;
 
 
 public record ValidationResponse( boolean success, String message ) {

@@ -1,7 +1,7 @@
 package com.ipho.ticketservice.presentation.controller;
 
 import com.ipho.ticketservice.application.service.TicketService;
-import com.ipho.ticketservice.infrastructure.client.ValidationResponse;
+import com.ipho.ticketservice.presentation.response.ValidationResponse;
 import com.ipho.ticketservice.infrastructure.messaging.DynamicKafkaListener;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +30,13 @@ public class TicketInternalController {
     public ResponseEntity<ValidationResponse> changeTicketStatus(@PathVariable("ticket_id") UUID ticketId) {
         return ResponseEntity.ok(ticketService.completePayment(ticketId));
     }
+
+    @GetMapping("/{ticket_id}/cancel")
+    public ResponseEntity<ValidationResponse> checkTicketCancel(@PathVariable("ticket_id") UUID ticketId,
+                                                         @RequestParam("user_id") Long userId) {
+        return ResponseEntity.ok(ticketService.checkTicketCancel(ticketId, userId));
+    }
+
 
     @PostMapping("/{ticket_id}/cancel")
     public ResponseEntity<ValidationResponse> changeTicketStatusCancel(@PathVariable("ticket_id") UUID ticketId) {

@@ -22,6 +22,9 @@ public class KakaoPayService implements PaymentProcessor {
     @Value("${kakao.pay.secret-key}")
     private String kakaoPaySecretKey;
 
+    @Value("${kakao.pay.url}")
+    private String kakaoPayUrl;
+
     // 카카오페이 결제 준비
     @Override
     public ReadyResponse payReady(String itemName, BigDecimal totalAmount, UUID ticket_id, UUID payment_id) {
@@ -33,9 +36,9 @@ public class KakaoPayService implements PaymentProcessor {
         parameters.put("quantity", "1");                                        // 상품 수량
         parameters.put("total_amount", String.valueOf(totalAmount));            // 총 금액
         parameters.put("tax_free_amount", "0");                                 // 비과세 금액
-        parameters.put("approval_url", "http://localhost:19096/api/v1/payments/approve?payment_id=" + payment_id + "&ticket_id=" + ticket_id); // 성공 시 URL
-        parameters.put("cancel_url", "http://localhost:19096/order/pay/cancel");      // 취소 시 URL
-        parameters.put("fail_url", "http://localhost:19096/order/pay/fail");          // 실패 시 URL
+        parameters.put("approval_url", "http://"+kakaoPayUrl +"/api/v1/payments/approve?payment_id=" + payment_id + "&ticket_id=" + ticket_id); // 성공 시 URL
+        parameters.put("cancel_url", "http://"+kakaoPayUrl +"/order/pay/cancel");      // 취소 시 URL
+        parameters.put("fail_url", "http://"+kakaoPayUrl +"/order/pay/fail");          // 실패 시 URL
 
         HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(parameters, getHeaders());
 

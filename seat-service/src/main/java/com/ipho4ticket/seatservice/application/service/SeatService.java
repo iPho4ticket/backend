@@ -1,13 +1,13 @@
 package com.ipho4ticket.seatservice.application.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ipho.common.dto.CancelTicketEvent;
+import com.ipho.common.dto.ConfirmSeatEvent;
+import com.ipho.common.dto.SeatBookingEvent;
+import com.ipho.common.dto.TicketMakingEvent;
 import com.ipho4ticket.clienteventfeign.ClientEventFeign;
 import com.ipho4ticket.clienteventfeign.dto.EventResponseDto;
 import com.ipho4ticket.seatservice.application.config.ConcurrencyControl;
-import com.ipho4ticket.seatservice.application.events.CancelTicketEvent;
-import com.ipho4ticket.seatservice.application.events.ConfirmSeatEvent;
-import com.ipho4ticket.seatservice.application.events.SeatBookingEvent;
-import com.ipho4ticket.seatservice.application.events.TicketMakingEvent;
 import com.ipho4ticket.seatservice.domain.model.Seat;
 import com.ipho4ticket.seatservice.domain.model.SeatStatus;
 import com.ipho4ticket.seatservice.domain.repository.SeatRepository;
@@ -147,7 +147,7 @@ public class SeatService {
         if (seat.getStatus().equals(SeatStatus.AVAILABLE)) {
             // 구매 가능하다면 상태 변경
             updateSeatToReserved(seat);
-            eventProducer.publishTicketMakingEvent(new TicketMakingEvent(request.getTicketId(),event.title(),request.getSeatNumber(),seat.getPrice()));
+            eventProducer.publishTicketMakingEvent(new TicketMakingEvent(request.getTicketId(),seat.getId(),event.title(),request.getSeatNumber(),seat.getPrice()));
         }
     }
 

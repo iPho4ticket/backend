@@ -11,6 +11,7 @@ import com.ipho4ticket.seatservice.application.config.ConcurrencyControl;
 import com.ipho4ticket.seatservice.domain.model.Seat;
 import com.ipho4ticket.seatservice.domain.model.SeatStatus;
 import com.ipho4ticket.seatservice.domain.repository.SeatRepository;
+import com.ipho4ticket.seatservice.infra.TicketClientService;
 import com.ipho4ticket.seatservice.presentation.request.SeatRequestDto;
 import com.ipho4ticket.seatservice.application.dto.SeatResponseDto;
 import jakarta.validation.Valid;
@@ -39,6 +40,7 @@ public class SeatService {
     private final ObjectMapper objectMapper;
     private final ClientEventFeign clientEventFeign;
     private final EventProducer eventProducer;
+    private final TicketClientService ticketClientService;
 
     @Transactional
     public SeatResponseDto createSeat(@Valid SeatRequestDto request) {
@@ -144,9 +146,13 @@ public class SeatService {
             throw new IllegalArgumentException(request.getSeatNumber() + "는 찾을 수 없는 좌석입니다.");
         }
 
+        //
+
+
         if (seat.getStatus().equals(SeatStatus.AVAILABLE)) {
             // 구매 가능하다면 상태 변경
             updateSeatToReserved(seat);
+            ticketClientService.requestRegisterTopic("ticket-making", request.getEventId()).subscribe();
             eventProducer.publishTicketMakingEvent(new TicketMakingEvent(request.getTicketId(),seat.getId(),event.title(),request.getSeatNumber(),seat.getPrice()));
         }
     }

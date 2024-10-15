@@ -31,6 +31,7 @@ public class DynamicKafkaListener implements MessageListener<String, Object> {
         CustomKafkaListenerEndpoint endpoint = new CustomKafkaListenerEndpoint(listenerId, listenerId, this);
 
         endpointRegistry.registerListenerContainer(endpoint, factory);
+        endpointRegistry.getListenerContainer(listenerId).start();
     }
 
 

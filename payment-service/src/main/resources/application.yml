@@ -30,6 +30,6 @@ spring:
 kakao:
   pay:
     secret-key: ${KAKAO_PAY_SECRET_KEY}
-    URI: ${KAKAO_PAY_URI}
+    url: ${KAKAO_PAY_URL}
 
 

@@ -1,5 +1,6 @@
 package com.ipho.ticketservice.infrastructure.client;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatusCode;
@@ -10,12 +11,13 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 
 @Service
+@Slf4j(topic = "seat-client")
 public class SeatClientService {
     private final WebClient webClient;
 
     @Autowired
     public SeatClientService(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.baseUrl("http://seat-service").build();
+        this.webClient = webClientBuilder.baseUrl("http://seat-service:19094").build();
     }
 
     public Mono<Response> requestRegisterTopic(String topic, UUID eventId) {
@@ -26,7 +28,6 @@ public class SeatClientService {
                                 .queryParam("topic", topic)
                                 .queryParam("eventId", eventId)
                                 .build())
-
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> {
                     return Mono.error(new RuntimeException("Client error"));

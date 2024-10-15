@@ -1,9 +1,9 @@
-package com.ipho.ticketservice.application.event.service;
+package com.ipho.ticketservice.application.event;
 
-import com.ipho.ticketservice.application.event.dto.CancelTicketEvent;
-import com.ipho.ticketservice.application.event.dto.ConfirmSeatEvent;
-import com.ipho.ticketservice.application.event.dto.SeatBookingEvent;
-import com.ipho.ticketservice.application.event.dto.TicketTopic;
+import com.ipho.common.dto.CancelTicketEvent;
+import com.ipho.common.dto.ConfirmSeatEvent;
+import com.ipho.common.dto.SeatBookingEvent;
+import com.ipho.ticketservice.application.event.TicketTopic;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;

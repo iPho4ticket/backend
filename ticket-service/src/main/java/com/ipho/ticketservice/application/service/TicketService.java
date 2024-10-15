@@ -1,8 +1,12 @@
 package com.ipho.ticketservice.application.service;
 
+import com.ipho.common.dto.CancelTicketEvent;
+import com.ipho.common.dto.ConfirmSeatEvent;
+import com.ipho.common.dto.SeatBookingEvent;
+import com.ipho.common.dto.TicketMakingEvent;
 import com.ipho.ticketservice.application.dto.TicketInfoDto;
-import com.ipho.ticketservice.application.event.dto.*;
-import com.ipho.ticketservice.application.event.service.EventProducer;
+import com.ipho.ticketservice.application.event.TicketTopic;
+import com.ipho.ticketservice.application.event.EventProducer;
 import com.ipho.ticketservice.domain.model.Ticket;
 import com.ipho.ticketservice.domain.model.TicketStatus;
 import com.ipho.ticketservice.domain.repository.TicketRepository;
@@ -34,7 +38,7 @@ public class TicketService {
         Ticket ticket = new Ticket(dto.userId(), dto.eventId(), dto.seatNumber(), dto.price());
 
         ticketRepository.save(ticket);
-        seatClientService.requestRegisterTopic(TicketTopic.SEAT_BOOKING.getTopic(), dto.eventId());
+        seatClientService.requestRegisterTopic(TicketTopic.SEAT_BOOKING.getTopic(), dto.eventId()).subscribe();
         eventProducer.publishSeatBookingEvent(new SeatBookingEvent(ticket.getUuid(), dto.eventId(), dto.userId(), dto.seatNumber()));
 
         return TicketResponseDto.createTicket(ticket);
@@ -50,7 +54,7 @@ public class TicketService {
         Ticket ticket = ticketRepository.findByUuidAndStatusNot(ticketId, TicketStatus.CANCELED).orElseThrow(() -> new TicketException(HttpStatus.BAD_REQUEST, "not found ticket or already canceled"));
         ticket.cancel();
 
-        seatClientService.requestRegisterTopic(TicketTopic.CANCEL_TICKET.getTopic(), ticket.getEventId());
+        seatClientService.requestRegisterTopic(TicketTopic.CANCEL_TICKET.getTopic(), ticket.getEventId()).subscribe();
         eventProducer.publishCancelTicket(new CancelTicketEvent(ticket.getEventId(), ticket.getSeatNumber(), ticket.getPrice()));
         return TicketResponseDto.cancelTicket(ticket);
     }
@@ -68,7 +72,7 @@ public class TicketService {
         Ticket ticket = ticketRepository.findByValidationTicket(ticketId, TicketStatus.PENDING).orElseThrow(() -> new ValidationException("not found valid ticket by ticketId"));
         ticket.completePayment();
 
-        seatClientService.requestRegisterTopic(TicketTopic.CONFIRM_SEAT.getTopic(), ticket.getEventId());
+        seatClientService.requestRegisterTopic(TicketTopic.CONFIRM_SEAT.getTopic(), ticket.getEventId()).subscribe();
         eventProducer.publishConfirmSeat(new ConfirmSeatEvent(ticket.getEventId(), ticket.getSeatNumber(), ticket.getPrice()));
 
         return new ValidationResponse(true, ticket.getEventName() + ":" + ticket.getSeatNumber());
@@ -88,7 +92,7 @@ public class TicketService {
         Ticket ticket = ticketRepository.findByUuid(ticketId).orElseThrow(() -> new ValidationException("not found ticket"));
         ticket.cancel();
 
-        seatClientService.requestRegisterTopic(TicketTopic.CANCEL_TICKET.getTopic(), ticket.getEventId());
+        seatClientService.requestRegisterTopic(TicketTopic.CANCEL_TICKET.getTopic(), ticket.getEventId()).subscribe();
         eventProducer.publishCancelTicket(new CancelTicketEvent(ticket.getEventId(), ticket.getSeatNumber(), ticket.getPrice()));
         return new ValidationResponse(true, "success");
     }

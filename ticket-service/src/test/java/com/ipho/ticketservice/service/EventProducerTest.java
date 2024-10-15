@@ -1,9 +1,9 @@
 package com.ipho.ticketservice.service;
 
-import com.ipho.ticketservice.application.event.dto.CancelTicketEvent;
-import com.ipho.ticketservice.application.event.dto.SeatBookingEvent;
-import com.ipho.ticketservice.application.event.dto.TicketTopic;
-import com.ipho.ticketservice.application.event.service.EventProducer;
+import com.ipho.common.dto.CancelTicketEvent;
+import com.ipho.common.dto.SeatBookingEvent;
+import com.ipho.ticketservice.application.event.TicketTopic;
+import com.ipho.ticketservice.application.event.EventProducer;
 import com.ipho.ticketservice.infrastructure.messaging.DynamicKafkaListener;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

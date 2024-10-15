@@ -13,6 +13,6 @@ public class EventProducer {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public void publishTicketMakingEvent(TicketMakingEvent event) {
-        kafkaTemplate.send("ticket-making" + "-" + event.getTicketId(), event);
+        kafkaTemplate.send("ticket-making" + "-" + event.getEventId(), event);
     }
 }

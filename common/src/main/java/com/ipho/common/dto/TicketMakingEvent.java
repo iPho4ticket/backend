@@ -11,6 +11,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TicketMakingEvent {
+    private UUID eventId;
     private UUID ticketId;
     private UUID seatId;
     private String eventName;

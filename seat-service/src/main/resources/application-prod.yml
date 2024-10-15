@@ -26,14 +26,17 @@ spring:
 
 
   kafka:
-    bootstrap-servers: localhost:9092  # 내부 Docker 네트워크에서 사용할 수 있는 Kafka 주소
+    bootstrap-servers: localhost:9092
     consumer:
       group-id: ${spring.application.name}-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
         spring.json.trusted.packages: '*'
+        specific-value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer

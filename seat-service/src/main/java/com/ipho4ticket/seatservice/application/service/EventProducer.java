@@ -1,6 +1,6 @@
 package com.ipho4ticket.seatservice.application.service;
 
-import com.ipho4ticket.seatservice.application.events.TicketMakingEvent;
+import com.ipho.common.dto.TicketMakingEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;

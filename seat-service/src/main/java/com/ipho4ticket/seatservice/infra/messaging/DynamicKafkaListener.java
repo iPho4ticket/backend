@@ -1,9 +1,8 @@
 package com.ipho4ticket.seatservice.infra.messaging;
 
-
-import com.ipho4ticket.seatservice.application.events.CancelTicketEvent;
-import com.ipho4ticket.seatservice.application.events.ConfirmSeatEvent;
-import com.ipho4ticket.seatservice.application.events.SeatBookingEvent;
+import com.ipho.common.dto.CancelTicketEvent;
+import com.ipho.common.dto.ConfirmSeatEvent;
+import com.ipho.common.dto.SeatBookingEvent;
 import com.ipho4ticket.seatservice.application.service.SeatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +22,7 @@ public class DynamicKafkaListener implements MessageListener<String, Object> {
     private final KafkaListenerEndpointRegistry endpointRegistry;
     private final ConcurrentKafkaListenerContainerFactory<String, String> factory;
     private final SeatService seatService;
+
 
 
     public void startListener(String topic, UUID uuid) {

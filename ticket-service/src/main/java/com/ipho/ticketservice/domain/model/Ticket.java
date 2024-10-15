@@ -1,9 +1,6 @@
 package com.ipho.ticketservice.domain.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.sql.Timestamp;
@@ -31,6 +28,7 @@ public class Ticket {
     private String seatNumber;
     private Double price;
 
+    @Enumerated(EnumType.STRING)
     private TicketStatus status;
     private Timestamp reservationTime;
     private Timestamp expirationTime;

@@ -1,5 +1,5 @@
 plugins {
-	id 'java'
+	id 'java-conventions'
 	id 'org.springframework.boot'
 	id 'spring-cloud-conventions'
 }

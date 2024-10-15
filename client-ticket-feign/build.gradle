@@ -1,5 +1,5 @@
 plugins {
-    id 'java'
+    id 'java-conventions'
     id 'ipho.spring-cloud-conventions'
     id 'org.springframework.boot'
 }
@@ -10,3 +10,5 @@ dependencies {
     implementation 'io.github.openfeign:feign-micrometer'
 }
 
+bootJar.enabled = false
+jar.enabled = true

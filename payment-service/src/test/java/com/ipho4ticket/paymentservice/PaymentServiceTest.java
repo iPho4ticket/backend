@@ -246,7 +246,7 @@ public class PaymentServiceTest {
 
         // Mocking 티켓 상태 변경 응답
         ValidationResponse validationPostResponse = new ValidationResponse(true, "Status changed");
-        when(clientTicketFeign.changeTicketStatus(ticketId)).thenReturn(validationPostResponse);
+        when(clientTicketFeign.changeTicketStatusCancel(ticketId)).thenReturn(validationPostResponse);
 
         // 결제 취소 실행
         ApproveResponse response = paymentService.cancelPayment(payment.getPaymentId(), userId,
@@ -267,7 +267,7 @@ public class PaymentServiceTest {
         // 티켓 검증 및 상태 변경 호출 확인
         verify(clientTicketFeign, times(1)).checkTicketCancel(eq(ticketId),
             eq(payment.getUserId()));
-        verify(clientTicketFeign, times(1)).changeTicketStatus(ticketId);
+        verify(clientTicketFeign, times(1)).changeTicketStatusCancel(ticketId);
     }
 
 

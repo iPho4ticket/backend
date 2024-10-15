@@ -1,8 +1,12 @@
 package com.ipho.ticketservice.application.service;
 
+import com.ipho.common.dto.CancelTicketEvent;
+import com.ipho.common.dto.ConfirmSeatEvent;
+import com.ipho.common.dto.SeatBookingEvent;
+import com.ipho.common.dto.TicketMakingEvent;
 import com.ipho.ticketservice.application.dto.TicketInfoDto;
-import com.ipho.ticketservice.application.event.dto.*;
-import com.ipho.ticketservice.application.event.service.EventProducer;
+import com.ipho.ticketservice.application.event.TicketTopic;
+import com.ipho.ticketservice.application.event.EventProducer;
 import com.ipho.ticketservice.domain.model.Ticket;
 import com.ipho.ticketservice.domain.model.TicketStatus;
 import com.ipho.ticketservice.domain.repository.TicketRepository;

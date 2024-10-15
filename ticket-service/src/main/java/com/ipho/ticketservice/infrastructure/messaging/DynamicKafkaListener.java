@@ -1,8 +1,8 @@
 package com.ipho.ticketservice.infrastructure.messaging;
 
 
-import com.ipho.ticketservice.application.event.dto.TicketMakingEvent;
-import com.ipho.ticketservice.application.event.dto.TicketTopic;
+import com.ipho.common.dto.TicketMakingEvent;
+import com.ipho.ticketservice.application.event.TicketTopic;
 import com.ipho.ticketservice.application.service.TicketService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

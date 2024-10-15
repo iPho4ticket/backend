@@ -1,6 +1,6 @@
 package com.ipho.ticketservice.service;
 
-import com.ipho.ticketservice.application.event.service.EventProducer;
+import com.ipho.ticketservice.application.event.EventProducer;
 import com.ipho.ticketservice.application.service.TicketService;
 import com.ipho.ticketservice.domain.model.Ticket;
 import com.ipho.ticketservice.domain.model.TicketStatus;

@@ -70,7 +70,6 @@ public class SeatService {
 
         // Redis에서 데이터 조회
         Page<SeatResponseDto> seatsPage;
-
         List<SeatResponseDto> cachedSeats = (List<SeatResponseDto>) redisTemplate.opsForValue().get("seats"); // 'seats' 키로 데이터를 가져옴
 
         // Redis에 캐시된 데이터가 있는지 확인
@@ -110,7 +109,12 @@ public class SeatService {
         Seat seat = Optional.ofNullable(cachedSeat)
                 .map(seatObj -> objectMapper.convertValue(seatObj, Seat.class)) // 캐시에서 가져온 데이터를 Seat 객체로 변환
                 .orElseGet(() -> {
-                    cacheSeats(seatRepository.findAll());
+                    // 좌석 정보를 DTO로 변환
+                    List<SeatResponseDto> seatResponse = seatRepository.findAll().stream()
+                            .map(this::toResponseDTO)
+                            .collect(Collectors.toList());
+
+                    cacheSeats(seatResponse);
                     return seatRepository.findById(seatId).orElseThrow(() -> new IllegalArgumentException(seatId + "는 찾을 수 없는 좌석입니다."));
                 });
 
@@ -188,11 +192,11 @@ public class SeatService {
                 .build();
     }
 
-    private void cacheSeats(List<Seat> seatResponseDtos){
+    private void cacheSeats(List<SeatResponseDto> seatResponseDtos){
         String cacheKey;
         // 각 좌석 정보를 Redis에 저장
-        for (Seat seat : seatResponseDtos) {
-            cacheKey = "seat::" + seat.getId();
+        for (SeatResponseDto seat : seatResponseDtos) {
+            cacheKey = "seat::" + seat.getSeatId();
             // TTL = 10s
             redisTemplate.opsForValue().set(cacheKey, seat,10,TimeUnit.SECONDS);
         }

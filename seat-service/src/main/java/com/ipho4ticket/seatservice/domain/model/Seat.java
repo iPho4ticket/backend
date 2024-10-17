@@ -23,7 +23,7 @@ public class Seat{
     @Id
     @GeneratedValue(strategy= GenerationType.UUID)
     @Column(name="seat_id")
-    private UUID id;
+    private UUID seatId;
 
     @Column(name = "event_id", nullable = false)
     private UUID eventId;

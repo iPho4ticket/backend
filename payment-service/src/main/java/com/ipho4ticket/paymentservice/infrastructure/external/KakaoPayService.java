@@ -5,6 +5,7 @@ import com.ipho4ticket.paymentservice.application.dto.PaymentInfoResponse;
 import com.ipho4ticket.paymentservice.application.dto.ReadyResponse;
 import com.ipho4ticket.paymentservice.domain.service.PaymentProcessor;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -30,11 +31,11 @@ public class KakaoPayService implements PaymentProcessor {
     public ReadyResponse payReady(String itemName, BigDecimal totalAmount, UUID ticket_id, UUID payment_id) {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("cid", "TC0ONETIME");                                    // 가맹점 코드
-        parameters.put("partner_order_id", "1234567890");          // 주문번호
+        parameters.put("partner_order_id", String.valueOf(payment_id));          // 주문번호
         parameters.put("partner_user_id", "userId");                            // 회원 아이디
         parameters.put("item_name", itemName);                                  // 상품명
         parameters.put("quantity", "1");                                        // 상품 수량
-        parameters.put("total_amount", String.valueOf(totalAmount));            // 총 금액
+        parameters.put("total_amount", String.valueOf(totalAmount.setScale(0, RoundingMode.DOWN).intValue()));            // 총 금액
         parameters.put("tax_free_amount", "0");                                 // 비과세 금액
         parameters.put("approval_url", "http://"+kakaoPayUrl +"/api/v1/payments/approve?payment_id=" + payment_id + "&ticket_id=" + ticket_id); // 성공 시 URL
         parameters.put("cancel_url", "http://"+kakaoPayUrl +"/order/pay/cancel");      // 취소 시 URL

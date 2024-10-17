@@ -1,9 +1,9 @@
 package com.ipho4ticket.seatservice.presentation.controller;
 
 import com.ipho4ticket.seatservice.application.service.SeatService;
-import com.ipho4ticket.seatservice.domain.model.Seat;
 import com.ipho4ticket.seatservice.presentation.request.SeatRequestDto;
 import com.ipho4ticket.seatservice.application.dto.SeatResponseDto;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -12,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -24,21 +23,21 @@ public class SeatController {
 
     // 좌석 생성
     @PostMapping
-    public ResponseEntity<SeatResponseDto> createSeat(
-            @RequestBody SeatRequestDto request){
+    public ResponseEntity<?> createSeat(@Valid @RequestBody SeatRequestDto request){
+
         SeatResponseDto seat=seatService.createSeat(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(seat);
     }
 
     // 이벤트 좌석 전체 조회
     @GetMapping("/events/{event_id}")
-    public ResponseEntity<Map<String, Object>> getAllSeats(
+    public ResponseEntity<Page<SeatResponseDto>> getAllSeats(
             @PathVariable("event_id") UUID event_id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Map<String, Object> seats = seatService.getAllSeats(event_id, pageable);
+        Page<SeatResponseDto> seats = seatService.getAllSeats(event_id, pageable);
         return ResponseEntity.ok(seats);
     }
 

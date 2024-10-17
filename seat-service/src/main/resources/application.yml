@@ -3,4 +3,4 @@ spring:
     name: seat-service
 
   profiles:
-    active: prod
+    active: dev

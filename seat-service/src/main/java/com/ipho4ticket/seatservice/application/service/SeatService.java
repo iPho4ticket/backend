@@ -8,13 +8,15 @@ import com.ipho.common.dto.TicketMakingEvent;
 import com.ipho4ticket.clienteventfeign.ClientEventFeign;
 import com.ipho4ticket.clienteventfeign.dto.EventResponseDto;
 import com.ipho4ticket.seatservice.application.config.ConcurrencyControl;
+import com.ipho4ticket.seatservice.application.service.exception.EventNotExistsException;
+import com.ipho4ticket.seatservice.application.service.exception.SeatAlreadyExistsException;
+import com.ipho4ticket.seatservice.application.service.exception.SeatNotExistsException;
 import com.ipho4ticket.seatservice.domain.model.Seat;
 import com.ipho4ticket.seatservice.domain.model.SeatStatus;
 import com.ipho4ticket.seatservice.domain.repository.SeatRepository;
 import com.ipho4ticket.seatservice.infra.TicketClientService;
 import com.ipho4ticket.seatservice.presentation.request.SeatRequestDto;
 import com.ipho4ticket.seatservice.application.dto.SeatResponseDto;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.data.domain.Page;
@@ -25,7 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -43,12 +44,12 @@ public class SeatService {
     private final TicketClientService ticketClientService;
 
     @Transactional
-    public SeatResponseDto createSeat(@Valid SeatRequestDto request) {
+    public SeatResponseDto createSeat(SeatRequestDto request) {
         // 행 값+열 값 -> 좌석 생성
         Seat seat=new Seat(request.eventId(),request.row(),request.column(),request.price());
 
         if (seatRepository.findBySeatNumberAndEventId(seat.getSeatNumber(), seat.getEventId())!=null) {
-            throw new IllegalArgumentException(seat.getSeatNumber() + "는 이미 등록된 좌석입니다.");
+            throw new SeatAlreadyExistsException(seat.getSeatNumber() + "는 이미 등록된 좌석입니다.");
         }
         // 좌석 상태 변경 - 판매가능
         seat.updateStatus(SeatStatus.AVAILABLE);
@@ -58,18 +59,21 @@ public class SeatService {
     }
 
 
+
     /**
      * 좌석 전체 조회 시(seatId가 key),
      * 1. redis에 데이터가 없다면 -> TTL 초과되었다는 뜻 -> 전체 좌석 다시 저장
      * 2. redis에 데이터가 있다면 -> redis에서 호출
      */
-    public Map<String, Object> getAllSeats(UUID eventId, Pageable pageable) {
+    public Page<SeatResponseDto> getAllSeats(UUID eventId, Pageable pageable) {
+        Page<SeatResponseDto> seatsPage;
 
         // 관련 event 조회
-        EventResponseDto event=clientEventFeign.getEvent(eventId);
+        EventResponseDto event = Optional.ofNullable(clientEventFeign.getEvent(eventId))
+                .orElseThrow(() -> new EventNotExistsException("해당 공연 정보가 없습니다."));
+
 
         // Redis에서 데이터 조회
-        Page<SeatResponseDto> seatsPage;
         List<SeatResponseDto> cachedSeats = (List<SeatResponseDto>) redisTemplate.opsForValue().get("seats"); // 'seats' 키로 데이터를 가져옴
 
         // Redis에 캐시된 데이터가 있는지 확인
@@ -85,13 +89,11 @@ public class SeatService {
                     .collect(Collectors.toList());
 
             cacheSeats(seatResponseDtos);
-
             seatsPage=new PageImpl<>(seatResponseDtos, pageable, seatResponseDtos.size());
         }
-        // 이벤트와 좌석 정보를 Map으로 반환
-        // "event", event,
-        return Map.of("seats", seatsPage);
+        return seatsPage;
     }
+
 
 
     /**
@@ -115,7 +117,7 @@ public class SeatService {
                             .collect(Collectors.toList());
 
                     cacheSeats(seatResponse);
-                    return seatRepository.findById(seatId).orElseThrow(() -> new IllegalArgumentException(seatId + "는 찾을 수 없는 좌석입니다."));
+                    return seatRepository.findById(seatId).orElseThrow(() -> new SeatNotExistsException(seatId + "는 찾을 수 없는 좌석입니다."));
                 });
 
         return toResponseDTO(seat);
@@ -125,23 +127,19 @@ public class SeatService {
     @Transactional
     public void deleteSeat(UUID seatId) {
         Seat seat=seatRepository.findById(seatId)
-                .orElseThrow(()->new IllegalArgumentException(seatId+"는 찾을 수 없는 좌석입니다."));
+                .orElseThrow(()->new SeatNotExistsException(seatId+"는 찾을 수 없는 좌석입니다."));
         seatRepository.delete(seat);
     }
 
     /**
      * 좌석 예약 요청 -> 좌석 체크 후 감소 -> 티켓 생성 요청
-     * 이 과정은 동기적으로 처리해야되지 않을까,,,
      */
     @Transactional
     public void checkSeat(SeatBookingEvent request) {
         EventResponseDto event=clientEventFeign.getEvent(request.getEventId());
 
-        Seat seat = seatRepository.findBySeatNumberAndEventId(request.getSeatNumber(), request.getEventId());
-
-        if (seat==null) {
-            throw new IllegalArgumentException(request.getSeatNumber() + "는 찾을 수 없는 좌석입니다.");
-        }
+        Seat seat = Optional.ofNullable(seatRepository.findBySeatNumberAndEventId(request.getSeatNumber(), request.getEventId()))
+                .orElseThrow(() -> new SeatNotExistsException(request.getSeatNumber() + "는 찾을 수 없는 좌석입니다."));
 
         if (seat.getStatus().equals(SeatStatus.AVAILABLE)) {
             // 구매 가능하다면 상태 변경
@@ -161,7 +159,7 @@ public class SeatService {
          * - DB와 redis 둘 다 수정 : Write-Through 전략으로 비동기적 저장
          */
         seatRepository.save(seat); // 상태 업데이트 후 좌석 저장
-        redisTemplate.opsForValue().set(seat.getId().toString(), seat);  // 캐시에 상태 업데이트
+        cacheSeat(toResponseDTO(seat)); // 캐시에 상태 업데이트
     }
 
     @Transactional
@@ -170,7 +168,7 @@ public class SeatService {
         seat.updateStatus(SeatStatus.AVAILABLE); // 좌석 상태 업데이트
 
         seatRepository.save(seat); // 상태 업데이트 후 좌석 저장
-        redisTemplate.opsForValue().set(seat.getId().toString(), seat);  // 캐시에 상태 업데이트
+        cacheSeat(toResponseDTO(seat));
     }
 
     @Transactional
@@ -179,7 +177,7 @@ public class SeatService {
         seat.updateStatus(SeatStatus.SOLD);
 
         seatRepository.save(seat); // 상태 업데이트 후 좌석 저장
-        redisTemplate.opsForValue().set(seat.getId().toString(), seat);  // 캐시에 상태 업데이트
+        cacheSeat(toResponseDTO(seat));
     }
 
 
@@ -192,13 +190,18 @@ public class SeatService {
                 .build();
     }
 
-    private void cacheSeats(List<SeatResponseDto> seatResponseDtos){
+    private void cacheSeats(List<SeatResponseDto> seatResponseDto){
         String cacheKey;
         // 각 좌석 정보를 Redis에 저장
-        for (SeatResponseDto seat : seatResponseDtos) {
+        for (SeatResponseDto seat : seatResponseDto) {
             cacheKey = "seat::" + seat.getSeatId();
             // TTL = 10s
-            redisTemplate.opsForValue().set(cacheKey, seat,10,TimeUnit.SECONDS);
+            redisTemplate.opsForValue().set(cacheKey, seat,30,TimeUnit.SECONDS);
         }
+    }
+    private void cacheSeat(SeatResponseDto seatResponseDto){
+        String cacheKey = "seat::" + seatResponseDto.getSeatId();
+        // TTL = 10s
+        redisTemplate.opsForValue().set(cacheKey, seatResponseDto, 30, TimeUnit.SECONDS);
     }
 }

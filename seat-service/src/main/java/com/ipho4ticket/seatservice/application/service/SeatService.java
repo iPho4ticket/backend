@@ -74,7 +74,7 @@ public class SeatService {
 
 
         // Redis에서 데이터 조회
-        List<SeatResponseDto> cachedSeats = (List<SeatResponseDto>) redisTemplate.opsForValue().get("seats"); // 'seats' 키로 데이터를 가져옴
+        List<SeatResponseDto> cachedSeats = (List<SeatResponseDto>) redisTemplate.opsForValue().get("seat"); // 'seat' 키로 데이터를 가져옴
 
         // Redis에 캐시된 데이터가 있는지 확인
         if (cachedSeats != null) {
@@ -102,6 +102,7 @@ public class SeatService {
      * 2. 좌석이 redis에 있다면 -> redis에서 호출
      */
     @SneakyThrows
+    @Transactional
     public SeatResponseDto getSeat(UUID seatId) {
         // Redis에서 좌석 데이터 조회
         String cacheKey = "seat::" + seatId; // 캐시 키 설정
@@ -111,15 +112,18 @@ public class SeatService {
         Seat seat = Optional.ofNullable(cachedSeat)
                 .map(seatObj -> objectMapper.convertValue(seatObj, Seat.class)) // 캐시에서 가져온 데이터를 Seat 객체로 변환
                 .orElseGet(() -> {
-                    // 좌석 정보를 DTO로 변환
+                    // 좌석 존재하는지 확인
+                    Seat seatExist=seatRepository.findById(seatId).orElseThrow(() -> new SeatNotExistsException(seatId + "는 찾을 수 없는 좌석입니다."));
+                    // 좌석 정보를 DTO로 변환 후 캐싱
                     List<SeatResponseDto> seatResponse = seatRepository.findAll().stream()
                             .map(this::toResponseDTO)
                             .collect(Collectors.toList());
-
                     cacheSeats(seatResponse);
-                    return seatRepository.findById(seatId).orElseThrow(() -> new SeatNotExistsException(seatId + "는 찾을 수 없는 좌석입니다."));
+
+                    return seatExist;
                 });
 
+        System.out.println(seat.getSeatId());
         return toResponseDTO(seat);
     }
 
@@ -145,7 +149,7 @@ public class SeatService {
             // 구매 가능하다면 상태 변경
             updateSeatToReserved(seat);
             ticketClientService.requestRegisterTopic("ticket-making", request.getEventId()).subscribe();
-            eventProducer.publishTicketMakingEvent(new TicketMakingEvent(request.getEventId(), request.getTicketId(),seat.getId(),event.title(),request.getSeatNumber(),seat.getPrice()));
+            eventProducer.publishTicketMakingEvent(new TicketMakingEvent(request.getEventId(), request.getTicketId(),seat.getSeatId(),event.title(),request.getSeatNumber(),seat.getPrice()));
         }
     }
 
@@ -183,7 +187,7 @@ public class SeatService {
 
     private SeatResponseDto toResponseDTO(Seat seat){
         return SeatResponseDto.builder()
-                .seatId(seat.getId())
+                .seatId(seat.getSeatId())
                 .seatNumber(seat.getSeatNumber())
                 .price(seat.getPrice())
                 .status(seat.getStatus())

@@ -122,8 +122,6 @@ public class SeatService {
 
                     return seatExist;
                 });
-
-        System.out.println(seat.getSeatId());
         return toResponseDTO(seat);
     }
 

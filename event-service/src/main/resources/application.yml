@@ -3,4 +3,4 @@ spring:
     name: event-service
 
   profiles:
-    active: prod
+    active: dev

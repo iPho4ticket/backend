@@ -2,6 +2,7 @@ package com.ipho4ticket.paymentservice.domain.repository;
 
 
 import com.ipho4ticket.paymentservice.domain.model.Payment;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,4 +13,6 @@ import org.springframework.stereotype.Repository;
 public interface PaymentRepository extends JpaRepository<Payment, UUID>, CustomPaymentRepository {
 
     Page<Payment> findByUserId(Long currentUserId, Pageable pageable);
+
+    Optional<Payment> findByTicketId(UUID uuid);
 }

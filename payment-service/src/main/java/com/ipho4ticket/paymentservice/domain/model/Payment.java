@@ -14,6 +14,7 @@ import java.util.UUID;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "payment")
@@ -33,6 +34,7 @@ public class Payment {
     @Column(name= "ticket_id", nullable = false)
     private UUID ticketId; // 티켓 ID (외부 테이블 ticket과 연관)
 
+    @Setter
     @Column(name = "tid")
     private String tid;
 
@@ -64,7 +66,4 @@ public class Payment {
         this.status = paymentStatus;
     }
 
-    public void setTid(String tid) {
-        this.tid = tid;
-    }
 }

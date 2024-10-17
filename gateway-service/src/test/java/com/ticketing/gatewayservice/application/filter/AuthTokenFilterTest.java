@@ -81,7 +81,7 @@ class AuthTokenFilterTest {
 		// AuthWebClient가 성공적으로 토큰을 검증한 경우
 		Map<String, Object> claims = claims();
 
-		when(authWebClient.validateToken("Bearer mockToken")).thenReturn(Mono.just(claims));
+		when(authWebClient.validateToken("mockToken")).thenReturn(Mono.just(claims));
 		when(chain.filter(exchange)).thenReturn(Mono.empty());
 
 		// When: 필터 실행
@@ -100,7 +100,7 @@ class AuthTokenFilterTest {
 	void invalidToken_returnsUnauthorized() {
 		// Given: 유효하지 않은 토큰
 		when(cacheService.getFromCache("mockToken")).thenReturn(null);
-		when(authWebClient.validateToken("Bearer mockToken")).thenReturn(
+		when(authWebClient.validateToken("mockToken")).thenReturn(
 			Mono.error(new RuntimeException("Unauthorized")));
 
 		// When: 필터 실행

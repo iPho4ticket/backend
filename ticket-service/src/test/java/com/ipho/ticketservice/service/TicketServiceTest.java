@@ -10,14 +10,18 @@ import com.ipho.ticketservice.application.service.TicketService;
 import com.ipho.ticketservice.domain.model.Ticket;
 import com.ipho.ticketservice.domain.model.TicketStatus;
 import com.ipho.ticketservice.domain.repository.TicketRepository;
+import com.ipho.ticketservice.presentation.exception.TicketException;
+import com.ipho.ticketservice.presentation.exception.ValidationException;
 import com.ipho.ticketservice.presentation.response.ValidationResponse;
 import com.ipho.ticketservice.infrastructure.messaging.DynamicKafkaListener;
 import com.ipho.ticketservice.presentation.request.TicketRequestDto;
 import com.ipho.ticketservice.presentation.response.TicketResponseDto;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.kafka.test.context.EmbeddedKafka;
@@ -27,6 +31,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -35,16 +40,12 @@ public class TicketServiceTest {
 
     @Autowired
     private TicketRepository ticketRepository;
-
     @Autowired
     private TicketService ticketService;
-
     @Autowired
     private EventProducer eventProducer;
-
     @Autowired
     private KafkaTemplate<String, Object> kafkaTemplate;
-
     @Autowired
     private DynamicKafkaListener dynamicKafkaListener;
 
@@ -191,5 +192,36 @@ public class TicketServiceTest {
         System.out.println("ticket = " + response.getStatus().toString());
         System.out.println("validationResponse = " + validationResponse);
     }
+
+    @Test
+    @DisplayName("티켓 예매 생성 - ( Failure Case, 취소되지 않은 티켓 )")
+    void duplicateTicket_FailureCase() {
+        TicketRequestDto requestDto = new TicketRequestDto(1L, UUID.randomUUID(), "A1", 10000.0);
+        ticketService.reservationTicket(requestDto);
+
+        // cancel 상태를 제외한 ( 처리 중이거나, 결제가 완료됨 ) 상태에 대해서는 전부 예외 던진다.
+        TicketException exception = assertThrows(TicketException.class, () -> {
+            ticketService.reservationTicket(requestDto);
+        });
+
+        assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(exception.getMessage()).isEqualTo("pending ticket for that user already exists.");
+    }
+
+    @Test
+    @DisplayName("티켓 예매 생성 - ( Success Case, 취소된 티켓 )")
+    void duplicateTicket_SuccessCase() {
+        TicketRequestDto requestDto = new TicketRequestDto(1L, UUID.randomUUID(), "A1", 10000.0);
+        TicketResponseDto responseDto = ticketService.reservationTicket(requestDto);
+        ticketService.cancelTicket(responseDto.ticketId());
+
+        TicketResponseDto result = ticketService.reservationTicket(requestDto);
+
+        // 완전히 새로운 티켓을 생성
+        assertThat(result.ticketId()).isNotEqualTo(responseDto.ticketId());
+        assertThat(result.ticketStatus()).isNotEqualTo(TicketStatus.CANCELED);
+    }
+
+
 
 }

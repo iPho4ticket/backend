@@ -31,9 +31,13 @@ public class TicketServiceMockTest {
 
     @Autowired
     private TicketService ticketService;
+    @Autowired
     private TicketRepository ticketRepository;
+    @Autowired
     private EventProducer eventProducer;
+    @Autowired
     private SeatClientService seatClientService;
+
     @BeforeEach
     void setUp() {
         ticketRepository = mock(TicketRepository.class);

@@ -43,10 +43,7 @@ class SeatServiceTest {
     private ObjectMapper objectMapper;
 
     @Mock
-    private ClientEventFeign clientEventFeign;
-
-    @Mock
-    private EventProducer eventProducer;
+    private SeatResponseDto seatResponseDto;
 
     @InjectMocks
     private SeatService seatService;
@@ -145,15 +142,18 @@ class SeatServiceTest {
 
         when(valueOps.get(cacheKey)).thenReturn(seat);
 
-        when(objectMapper.writeValueAsString(seat)).thenReturn("cachedSeatJson");
+        // ObjectMapper의 변환 메소드 호출 시 캐시된 JSON 문자열을 반환하도록 설정
+        String cachedSeatJson = objectMapper.writeValueAsString(seat);
+        when(objectMapper.convertValue(seat, Seat.class)).thenReturn(seat); // 캐시된 데이터를 Seat 객체로 변환
+        when(objectMapper.readValue(cachedSeatJson, SeatResponseDto.class)).thenReturn(seatResponseDto);
 
+        // 좌석 응답 DTO를 생성
         SeatResponseDto seatResponseDto = SeatResponseDto.builder()
-                .seatId(seat.getId())
+                .seatId(seat.getSeatId())
                 .seatNumber(seat.getSeatNumber())
                 .price(seat.getPrice())
                 .status(seat.getStatus())
                 .build();
-        when(objectMapper.readValue("cachedSeatJson", SeatResponseDto.class)).thenReturn(seatResponseDto);
 
         SeatResponseDto result = seatService.getSeat(seatId);
 

@@ -69,10 +69,10 @@ public class TicketServiceTest {
 
         // 실제로는 seat-service 에서 feign 요청을 통해서 동적으로 topic 구독 ( 이때, 구독할 topic 은 ticket-making-{eventId} )
         dynamicKafkaListener.startListener(TicketTopic.TICKET_MAKING.getTopic(), requestDto.eventId());
-        kafkaTemplate.send(TicketTopic.TICKET_MAKING.getTopic() + "-" + requestDto.eventId(), new TicketMakingEvent(ticket.getUuid(), ticket.getSeatId(), "tmp Event Name", ticket.getSeatNumber(), BigDecimal.valueOf(ticket.getPrice())));
+        kafkaTemplate.send(TicketTopic.TICKET_MAKING.getTopic() + "-" + requestDto.eventId(), new TicketMakingEvent(ticket.getEventId(), ticket.getUuid(), ticket.getSeatId(), "tmp Event Name", ticket.getSeatNumber(), BigDecimal.valueOf(ticket.getPrice())));
 
         String topicName = TicketTopic.TICKET_MAKING.getTopic() + "-" + requestDto.eventId();
-        TicketMakingEvent eventDto = new TicketMakingEvent(ticket.getUuid(), ticket.getSeatId(), "tmp Event Name", ticket.getSeatNumber(), BigDecimal.valueOf(ticket.getPrice()));
+        TicketMakingEvent eventDto = new TicketMakingEvent(ticket.getEventId(), ticket.getUuid(), ticket.getSeatId(), "tmp Event Name", ticket.getSeatNumber(), BigDecimal.valueOf(ticket.getPrice()));
 
         try {
             SendResult<String, Object> result = kafkaTemplate.send(topicName, eventDto).get();

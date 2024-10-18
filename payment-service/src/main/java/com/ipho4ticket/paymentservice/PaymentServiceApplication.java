@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @SpringBootApplication
 @EnableJpaRepositories("com.ipho4ticket.paymentservice.domain.repository")
 @EnableFeignClients(basePackages = "com.ipho4ticket.clientticketfeign")
+@ComponentScan(basePackages = {"com.ipho4ticket.paymentservice", "com.ipho.common"})
 public class PaymentServiceApplication {
 
 	public static void main(String[] args) {

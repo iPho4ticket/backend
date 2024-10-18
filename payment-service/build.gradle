@@ -8,6 +8,7 @@ plugins {
 
 dependencies {
     implementation project(":client-ticket-feign")
+    implementation project(":common")
 
     // Feign
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'

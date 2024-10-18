@@ -13,6 +13,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.ipho.common.exception.payment.AccessDeniedPaymentException;
+import com.ipho.common.exception.payment.InvalidPaymentStatusException;
 import com.ipho4ticket.clientticketfeign.ClientTicketFeign;
 import com.ipho4ticket.clientticketfeign.dto.ValidationResponse;
 import com.ipho4ticket.paymentservice.application.dto.ApproveResponse;
@@ -183,7 +185,7 @@ public class PaymentServiceTest {
     void 결제_조회_권한_없음() {
         when(paymentRepository.findById(payment.getPaymentId())).thenReturn(Optional.of(payment));
 
-        assertThrows(AccessDeniedException.class, () -> {
+        assertThrows(AccessDeniedPaymentException.class, () -> {
             paymentService.getPayment(payment.getPaymentId(), 2L);  // 다른 userId
         });
     }
@@ -281,7 +283,7 @@ public class PaymentServiceTest {
         ReflectionTestUtils.setField(payment, "ticketId", ticketId);  // Reflection 사용하여 필드 설정
 
         // 다른 사용자의 결제 취소 시도
-        assertThrows(AccessDeniedException.class, () -> {
+        assertThrows(AccessDeniedPaymentException.class, () -> {
             paymentService.cancelPayment(payment.getPaymentId(), 2L, "T123456789", 10000, 0,
                 909);  // 다른 userId로 취소 시도
         });
@@ -308,7 +310,7 @@ public class PaymentServiceTest {
         payment.updateStatus(PaymentStatus.OPENED);
 
         // 결제 상태가 잘못된 경우 IllegalStateException 발생 확인
-        assertThrows(IllegalStateException.class, () -> {
+        assertThrows(InvalidPaymentStatusException.class, () -> {
             paymentService.cancelPayment(payment.getPaymentId(), userId, "T123456789", 10000, 0,
                 909);
         });

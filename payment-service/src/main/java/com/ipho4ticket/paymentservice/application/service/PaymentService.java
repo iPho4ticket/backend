@@ -15,6 +15,7 @@ import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.nio.file.AccessDeniedException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -41,26 +42,29 @@ public class PaymentService {
         }
 
         // 2. 결제 생성
-        Payment payment = createNewPayment(request);
+        Optional<Payment> existingPaymentOpt = paymentRepository.findByTicketId(request.ticketId());
+
+        Payment payment;
+
+        if (existingPaymentOpt.isPresent()) {
+            payment = existingPaymentOpt.get();
+
+            // 결제 상태가 완료 혹은 취소되지 않은 경우에만 덮어쓰기 (ex. PENDING이나 FAILED 상태)
+            if (!PaymentStatus.PENDING.equals(payment.getStatus()) && !PaymentStatus.FAILED.equals(payment.getStatus())) {
+                throw new IllegalStateException("이미 완료된 결제가 있습니다.");
+            }
+
+        } else {
+            // 새로운 결제를 생성
+            payment = createNewPayment(request);
+        }
+
         paymentRepository.save(payment);
-
-        // TODO: 이 지점에서 트랜잭션 분리가 필요한가.. 고민
-        /*
-        1. 단일 트랜잭션에서 처리 -> 외부 결제에서 실패할 경우 기존에 생성된 결제가 없어짐
-        대처방법 1-1. try-catch 를 통한 상태처리 (가장 유력)
-
-        2. kafka를 이용한 비동기 처리
-        -> 외부 queue를 타고 오다보니 결제 결과가 즉시 반환되지 않기 때문에 문제
-
-        3. Async를 이용한 비동기 처리
-        -> 내부 thread를 사용하여 간단한 비동기 처리 / 애플리케이션 부담이 늘어나면 결제 유실 가능성 있음
-         */
 
         // 3. 외부 결제 API를 통한 결제 시행 / ex) 카카오페이 결제 모듈
 
         try {
-            // 3. 외부 결제 API 호출 (카카오페이, PayPal 등)
-            ReadyResponse readyResponse = processor.payReady(validationResponse.message(), payment.getAmount(), request.ticketId(), payment.getPaymentId());
+            ReadyResponse readyResponse = processor.payReady("validationResponse.message()", payment.getAmount(), request.ticketId(), payment.getPaymentId());
 
             // 외부 결제가 성공적으로 준비된 경우, TID 저장 및 상태 업데이트
             payment.setTid(readyResponse.getTid());

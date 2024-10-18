@@ -35,8 +35,12 @@ public class TicketService {
 
     @Transactional
     public TicketResponseDto reservationTicket(TicketRequestDto dto) {
-        Ticket ticket = new Ticket(dto.userId(), dto.eventId(), dto.seatNumber(), dto.price());
+        Ticket ticket = ticketRepository.processingByDuplicateTicket(dto.userId(), dto.seatNumber(), dto.eventId(), TicketStatus.CANCELED).orElse(null);
 
+        if (ticket != null) {
+            throw new TicketException(HttpStatus.BAD_REQUEST, "pending ticket for that user already exists.");
+        }
+        ticket = new Ticket(dto.userId(), dto.eventId(), dto.seatNumber(), dto.price());
         ticketRepository.save(ticket);
         seatClientService.requestRegisterTopic(TicketTopic.SEAT_BOOKING.getTopic(), dto.eventId()).subscribe();
         eventProducer.publishSeatBookingEvent(new SeatBookingEvent(ticket.getUuid(), dto.eventId(), dto.userId(), dto.seatNumber()));

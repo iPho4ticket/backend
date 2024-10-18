@@ -28,9 +28,13 @@ public class TicketInternalMockTest {
 
     @Autowired
     private TicketService ticketService;
-    private TicketRepository ticketRepository;
-    private EventProducer eventProducer;
+    @Autowired
     private SeatClientService seatClientService;
+    @Autowired
+    private TicketRepository ticketRepository;
+    @Autowired
+    private EventProducer eventProducer;
+
 
     @BeforeEach
     void setUp() {

@@ -1,17 +1,12 @@
 package com.ipho4ticket.eventservice;
 
 import com.ipho4ticket.eventservice.application.dto.EventResponseDto;
-import com.ipho4ticket.eventservice.application.kevents.EventMakingEvent;
-import com.ipho4ticket.eventservice.application.service.EventProducer;
 import com.ipho4ticket.eventservice.application.service.EventService;
 import com.ipho4ticket.eventservice.domain.model.Event;
 import com.ipho4ticket.eventservice.domain.repository.EventRepository;
 import com.ipho4ticket.eventservice.presentation.request.EventRequestDto;
-import com.querydsl.core.BooleanBuilder;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
+import org.junit.jupiter.api.Test;;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -33,9 +28,6 @@ public class EventServiceTest {
 
     @Mock
     private EventRepository eventRepository;
-
-    @Mock
-    private EventProducer eventProducer;
 
     private EventRequestDto eventRequestDto;
     private Event event;
@@ -68,21 +60,10 @@ public class EventServiceTest {
         Event event = new Event(eventRequestDto.title(), eventRequestDto.description(), eventRequestDto.date(), eventRequestDto.startTime(), eventRequestDto.endTime());
 
         when(eventRepository.save(any(Event.class))).thenReturn(event);
-        eventService.createEvent(eventRequestDto);
+        EventResponseDto response=eventService.createEvent(eventRequestDto);
 
-        ArgumentCaptor<EventMakingEvent> eventCaptor = ArgumentCaptor.forClass(EventMakingEvent.class);
-
-        verify(eventProducer).publishEventMakingEvent(eventCaptor.capture());
-
-        // 캡처된 객체 검증
-        EventMakingEvent publishedEvent = eventCaptor.getValue();
-        assertNotNull(publishedEvent);
-        assertEquals(event.getEventId(), publishedEvent.getEventId());
-        assertEquals(event.getTitle(), publishedEvent.getTitle());
-        assertEquals(event.getDescription(), publishedEvent.getDescription());
-        assertEquals(event.getDate(), publishedEvent.getDate());
-        assertEquals(event.getStartTime(), publishedEvent.getStartTime());
-        assertEquals(event.getEndTime(), publishedEvent.getEndTime());
+        assertNotNull(response);
+        assertEquals(event.getTitle(),response.getTitle());
     }
 
     @Test

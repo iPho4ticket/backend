@@ -19,4 +19,7 @@ public interface TicketRepository {
     @Query("select t from Ticket t where t.uuid = :id and t.status != :status and t.expirationTime > CURRENT TIMESTAMP ")
     Optional<Ticket> findByValidationCancelTicket(UUID id, TicketStatus status);
 
+    @Query("select t from Ticket t where t.userId = :userId and t.seatNumber = :seatNumber and t.eventId = :eventId and t.status != :status")
+    Optional<Ticket> processingByDuplicateTicket(Long userId, String seatNumber, UUID eventId, TicketStatus status);
+
 }

@@ -70,7 +70,7 @@ jobs:
         id: build-event-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ipho-repository/event-service
+          ECR_REPOSITORY: ipho-repository
           IMAGE_NAME: event
           IMAGE_TAG: latest
         run: |
@@ -84,7 +84,7 @@ jobs:
         id: build-payment-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ipho-repository/payment-service
+          ECR_REPOSITORY: ipho-repository
           IMAGE_NAME: payment
           IMAGE_TAG: latest
         run: |
@@ -98,7 +98,7 @@ jobs:
         id: build-seat-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ipho-repository/seat-service
+          ECR_REPOSITORY: ipho-repository
           IMAGE_NAME: seat
           IMAGE_TAG: latest
         run: |
@@ -112,7 +112,7 @@ jobs:
         id: build-ticket-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ipho-repository/ticket-service
+          ECR_REPOSITORY: ipho-repository
           IMAGE_NAME: ticket
           IMAGE_TAG: latest
         run: |
@@ -126,7 +126,7 @@ jobs:
         id: build-user-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ipho-repository/user-service
+          ECR_REPOSITORY: ipho-repository
           IMAGE_NAME: user
           IMAGE_TAG: latest
         run: |

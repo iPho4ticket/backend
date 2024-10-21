@@ -56,7 +56,7 @@ jobs:
             --build-arg PAYMENT_SERVICE_URI=${{ secrets.PAYMENT_SERVICE_URI }} \
             --build-arg AUTH_SERVICE_INTERNAL_URL=${{ secrets.AUTH_SERVICE_INTERNAL_URL }} \
             --build-arg AUTH_SERVICE_NAME=${{ secrets.AUTH_SERVICE_NAME }} \
-            --build-arg INTERNAL_SERVICE_URL=${{ secrets.INTERNAL_SERVICE_URL }} \
+            --build-arg INTERNAL_SERVICE_URI=${{ secrets.INTERNAL_SERVICE_URI }} \
             --build-arg CACHE_EXPIRATION=${{ secrets.CACHE_EXPIRATION }} \
             --build-arg CACHE_MAX_SIZE=${{ secrets.CACHE_MAX_SIZE }} \
             -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .

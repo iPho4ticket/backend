@@ -93,13 +93,13 @@ jobs:
         run: |
           cd event-service
           docker build \
-            --build-arg EVENT_PORT=${{ secrets.EVENT_PORT }} \  
+            --build-arg EVENT_PORT=${{ secrets.EVENT_PORT }} \
             --build-arg RDS_HOST=${{ secrets.RDS_HOST }} \
             --build-arg RDS_USERNAME=${{ secrets.RDS_USERNAME }} \
             --build-arg RDS_PASSWORD=${{ secrets.RDS_PASSWORD }} \
             -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV   
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV
 
       # payment-service
       - name: Payment image to Amazon ECR
@@ -133,13 +133,13 @@ jobs:
         run: |
           cd seat-service
           docker build \
-            --build-arg SEAT_PORT=${{ secrets.SEAT_PORT }} \  
+            --build-arg SEAT_PORT=${{ secrets.SEAT_PORT }} \
             --build-arg RDS_HOST=${{ secrets.RDS_HOST }} \
             --build-arg RDS_USERNAME=${{ secrets.RDS_USERNAME }} \
             --build-arg RDS_PASSWORD=${{ secrets.RDS_PASSWORD }} \
             -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV  
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV
 
       # ticket-service
       - name: Ticket image to Amazon ECR
@@ -152,7 +152,7 @@ jobs:
         run: |
           cd ticket-service
           docker build \
-            --build-arg TICKET_PORT=${{ secrets.TICKET_PORT }} \  
+            --build-arg TICKET_PORT=${{ secrets.TICKET_PORT }} \
             --build-arg RDS_HOST=${{ secrets.RDS_HOST }} \
             --build-arg RDS_USERNAME=${{ secrets.RDS_USERNAME }} \
             --build-arg RDS_PASSWORD=${{ secrets.RDS_PASSWORD }} \
@@ -171,7 +171,7 @@ jobs:
         run: |
           cd user-service
           docker build \
-            --build-arg USER_PORT=${{ secrets.USER_PORT }} \  
+            --build-arg USER_PORT=${{ secrets.USER_PORT }} \
             --build-arg RDS_HOST=${{ secrets.RDS_HOST }} \
             --build-arg RDS_USERNAME=${{ secrets.RDS_USERNAME }} \
             --build-arg RDS_PASSWORD=${{ secrets.RDS_PASSWORD }} \

@@ -15,7 +15,7 @@ spring:
       ddl-auto: create
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: b-1.iphomsk.g0ve3u.c4.kafka.ap-northeast-2.amazonaws.com:9092, b-2.iphomsk.g0ve3u.c4.kafka.ap-northeast-2.amazonaws.com:9092
     consumer:
       group-id: ${spring.application.name}-group
       auto-offset-reset: earliest

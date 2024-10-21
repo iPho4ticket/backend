@@ -16,7 +16,7 @@ spring:
     driver-class-name: org.postgresql.Driver
 
   kafka:
-    bootstrap-servers: localhost:9092  # 내부 Docker 네트워크에서 사용할 수 있는 Kafka 주소
+    bootstrap-servers: b-1.iphomsk.g0ve3u.c4.kafka.ap-northeast-2.amazonaws.com:9092, b-2.iphomsk.g0ve3u.c4.kafka.ap-northeast-2.amazonaws.com:9092
     consumer:
       group-id: ${spring.application.name}-group
       auto-offset-reset: earliest

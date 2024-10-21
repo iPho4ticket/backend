@@ -2,15 +2,19 @@ server:
   port: ${AUTH_PORT}  # Auth 서비스의 포트 설정
 
 eureka:
+  instance:
+    hostname: localhost
   client:
-    register-with-eureka: true
-    fetch-registry: true
     service-url:
-      defaultZone: http://eureka-service:8761/eureka/
+      defaultZone: http://localhost:8761/eureka
 
 jwt:
   secret: ${JWT_SECRET_KEY}  # JWT 토큰 생성에 사용할 시크릿 키
   expiration: ${JWT_EXPIRATION_TIME}  # JWT 만료 시간
+
+user-service:
+  name: ${USER_SERVICE_NAME}  # internal 호출용 FeignClient에서 참조할 서비스 이름
+  url: ${USER_SERVICE_URL}  # internal 호출용 URL
 
 feign:
   client:
@@ -19,11 +23,7 @@ feign:
         connect-timeout: 5000  # 타임아웃 설정 (연결)
         read-timeout: 5000     # 타임아웃 설정 (응답)
 
-# Feign Client를 통해 호출하는 user-service 설정
-user-service:
-  name: ${USER_SERVICE_NAME}  # internal 호출용 FeignClient에서 참조할 서비스 이름
-  url: ${USER_SERVICE_URL}  # internal 호출용 URL
-
 logging:
   level:
     com.ticketing.auth-service: DEBUG  # Auth 서비스 패키지에 대한 디버그 로깅
+

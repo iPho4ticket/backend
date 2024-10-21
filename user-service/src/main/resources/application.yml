@@ -1,13 +1,6 @@
 server:
   port: ${USER_PORT}
 
-eureka:
-  client:
-    register-with-eureka: true
-    fetch-registry: true
-    service-url:
-      defaultZone: http://eureka-service:8761/eureka/
-
 spring:
   application:
     name: user-service
@@ -28,9 +21,15 @@ spring:
         format_sql: true
         highlight_sql: true
 
-# swagger 사용시 패키지 이름까지 사용해서 구별하도록 설정
 springdoc:
   use-fqn: true
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
 
 
 # 로그 수준

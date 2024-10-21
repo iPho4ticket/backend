@@ -1,11 +1,11 @@
 server:
   port: ${PAYMENT_PORT}
 eureka:
+  instance:
+    hostname: localhost
   client:
-    register-with-eureka: true
-    fetch-registry: true
     service-url:
-      defaultZone: http://eureka-service:8761/eureka/
+      defaultZone: http://localhost:8761/eureka
 spring:
   application:
     name: payment-service

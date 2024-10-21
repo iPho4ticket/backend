@@ -1,6 +1,5 @@
 server:
   port: ${GATEWAY_PORT}
-
 management:
   endpoints:
     web:
@@ -9,12 +8,12 @@ management:
   endpoint:
     health:
       show-details: always
-
 eureka:
+  instance:
+    hostname: localhost
   client:
     service-url:
-      defaultZone: http://eureka-service:8761/eureka/
-
+      defaultZone: http://localhost:8761/eureka
 spring:
   cloud:
     gateway:

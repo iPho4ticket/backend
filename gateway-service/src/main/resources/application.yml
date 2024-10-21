@@ -34,12 +34,12 @@ spring:
           uri: ${PAYMENT_SERVICE_URI}
           predicates:
             - Path=/api/v1/payments/**
-        - id: internal-service
-          uri: ${INTERNAL_SERVICE_URI}
-          predicates:
-            - Path=/api/v1/internal/**
-          filters:
-            - name: DenyAccessGatewayFilter  # 사용자 정의 필터
+#        - id: internal-service
+#          uri: ${INTERNAL_SERVICE_URI}
+#          predicates:
+#            - Path=/api/v1/internal/**
+#          filters:
+#            - name: DenyAccessGatewayFilter  # 사용자 정의 필터
 
 # WebClient를 통해 호출하는 auth-service 설정
 auth-service:

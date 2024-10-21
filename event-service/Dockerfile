@@ -1,7 +1,17 @@
 FROM openjdk:17-jdk-slim
 
-WORKDIR /app
+ARG EVENT_PORT
+ARG RDS_HOST
+ARG RDS_USERNAME
+ARG RDS_PASSWORD
 
-COPY build/libs/event-service.jar /app/event-service.jar
+ENV EVENT_PORT=${EVENT_PORT}
+ENV RDS_HOST=${RDS_HOST}
+ENV RDS_USERNAME=${RDS_USERNAME}
+ENV RDS_PASSWORD=${RDS_PASSWORD}
 
-ENTRYPOINT ["java", "-jar", "/app/event-service.jar"]
+WORKDIR /ipho
+
+COPY build/libs/event-service.jar /ipho/event-service.jar
+
+ENTRYPOINT ["java", "-jar", "/ipho/event-service.jar"]

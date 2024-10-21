@@ -5,15 +5,15 @@ spring:
   application:
     name: user-service
   datasource:
-    url: ${USER_DB_DATABASE}
-    username: ${USER_DB_USERNAME}
-    password: ${USER_DB_PASSWORD}
-    driver-class-name: ${USER_DB_DRIVER_CLASS}
+    url: jdbc:postgresql://ipho-postgres.cheewwqkgq8q.ap-northeast-2.rds.amazonaws.com:5432/postgres
+    username: postgres
+    password: 1234
+    driver-class-name: org.postgresql.Driver
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQL10Dialect
     show-sql: true
     hibernate:
-      ddl-auto: ${USER_DB_DDL}
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect

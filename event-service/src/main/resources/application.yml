@@ -1,6 +1,5 @@
 spring:
   application:
-    name: seat-service
-
+    name: event-service
   profiles:
     active: prod

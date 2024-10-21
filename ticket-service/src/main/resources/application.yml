@@ -6,7 +6,7 @@ spring:
     name: ticket-service
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
+    url: jdbc:postgresql://ipho-postgres.cheewwqkgq8q.ap-northeast-2.rds.amazonaws.com:5432/postgres
     username: postgres
     password: 1234
     driver-class-name: org.postgresql.Driver

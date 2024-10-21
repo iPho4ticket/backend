@@ -1,0 +1,144 @@
+###
+# @name Create-Event
+POST http://localhost:19093/api/v1/events
+Content-Type: application/json
+
+{
+  "title": "이벤트 제목",
+  "description": "이벤트 설명",
+  "date": "2024-10-10",
+  "startTime": "2024-10-10T10:00:00",
+  "endTime": "2024-10-10T12:00:00"
+}
+
+> {%
+    client.global.set("eventId", response.body.eventId);
+    client.log("Extracted eventId: " + client.global.get("eventId"));
+%}
+
+###
+# @name Create-Seat
+POST http://localhost:19094/api/v1/seats
+Content-Type: application/json
+
+{
+  "eventId": "{{eventId}}",
+  "row": "A",
+  "column": 1,
+  "price": 10000
+}
+
+###
+# @name 티켓 생성
+POST http://localhost:19095/api/v1/ticket
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "eventId": "{{eventId}}",
+  "seatNumber": "A1",
+  "price": 10000.0
+}
+
+###
+# @name 티켓 생성
+POST http://localhost:19095/api/v1/ticket
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "eventId": "{{eventId}}",
+  "seatNumber": "A1",
+  "price": 10000.0
+}
+
+###
+# @name 티켓 생성
+POST http://localhost:19095/api/v1/ticket
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "eventId": "{{eventId}}",
+  "seatNumber": "A1",
+  "price": 10000.0
+}
+
+###
+# @name 티켓 생성
+POST http://localhost:19095/api/v1/ticket
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "eventId": "{{eventId}}",
+  "seatNumber": "A1",
+  "price": 10000.0
+}
+
+###
+# @name 티켓 생성
+POST http://localhost:19095/api/v1/ticket
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "eventId": "{{eventId}}",
+  "seatNumber": "A1",
+  "price": 10000.0
+}
+
+###
+# @name 티켓 생성
+POST http://localhost:19095/api/v1/ticket
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "eventId": "{{eventId}}",
+  "seatNumber": "A1",
+  "price": 10000.0
+}
+
+
+###
+# @name 티켓 생성
+POST http://localhost:19095/api/v1/ticket
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "eventId": "{{eventId}}",
+  "seatNumber": "A1",
+  "price": 10000.0
+}
+
+
+###
+# @name 티켓 생성
+POST http://localhost:19095/api/v1/ticket
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "eventId": "{{eventId}}",
+  "seatNumber": "A1",
+  "price": 10000.0
+}
+
+> {%
+    client.global.set("ticketId", response.body.ticketId);
+    client.log("Extracted ticketId: " + client.global.get("ticketId"));
+%}
+
+###
+# @name 결제 생성
+POST http://localhost:19096/api/v1/payments
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "ticketId": "39a7ab59-d406-4156-b19b-7edba7070390",
+  "paymentMethod": "KAKAO_PAY",
+  "amount": "10000"
+}

@@ -1,0 +1,158 @@
+version: '3.8'
+
+services:
+  # Shared Database
+  shared-db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+    ports:
+      - "5432:5432"  # 모든 서비스가 동일한 포트에 연결됨
+    volumes:
+      - shared_db_data:/var/lib/postgresql/data
+    networks:
+      - my-microservices-network
+
+
+  # event-service 서버 정의
+  event-service:
+    build:
+      context: ./event-service
+    environment:
+      SERVER_PORT: 19093
+      SPRING_DATASOURCE_URL: jdbc:postgresql://shared-db:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "19093:19093"
+    depends_on:
+      - shared-db
+    networks:
+      - my-microservices-network
+
+  # seat-service 서버 정의
+  seat-service:
+    build:
+      context: ./seat-service
+    environment:
+      SERVER_PORT: 19094
+      SPRING_DATASOURCE_URL: jdbc:postgresql://shared-db:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "19094:19094"
+    depends_on:
+      - shared-db
+      - redis
+      - kafka
+    networks:
+      - my-microservices-network
+
+  # ticket-service 서버 정의
+  ticket-service:
+    build:
+      context: ./ticket-service
+    environment:
+      SERVER_PORT: 19095
+      SPRING_DATASOURCE_URL: jdbc:postgresql://shared-db:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "19095:19095"
+    depends_on:
+      - shared-db
+      - kafka
+    networks:
+      - my-microservices-network
+
+  # payment-service 서버 정의
+  payment-service:
+    build:
+      context: ./payment-service
+    environment:
+      SERVER_PORT: 19096
+      SPRING_PROFILES_ACTIVE: local
+      SPRING_DATASOURCE_URL: jdbc:postgresql://shared-db:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 1234
+      KAKAO_PAY_SECRET_KEY: DEV05A95ABF44BC625EDC618876311F56D002A5B
+      KAKAO_PAY_URL: localhost:19096
+    ports:
+      - "19096:19096"
+    volumes:
+      - ./app_data:/path/in/container
+    networks:
+      - my-microservices-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    restart: on-failure
+
+  # Redis
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - my-microservices-network
+
+  # Zookeeper
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - my-microservices-network
+
+  # Kafka
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9093:9092"
+      - "29092:29092"
+    networks:
+      - my-microservices-network
+
+  # Kafka UI
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    environment:
+      KAFKA_CLUSTERS_0_NAME: "local"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:9092"
+      KAFKA_CLUSTERS_0_ZOOKEEPER: "zookeeper:2181"
+    ports:
+      - "8081:8080"
+    depends_on:
+      - kafka
+    networks:
+      - my-microservices-network
+
+volumes:
+  shared_db_data:
+
+networks:
+  my-microservices-network:
+    driver: bridge

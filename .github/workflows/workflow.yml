@@ -1,0 +1,136 @@
+name: Staging
+
+on:
+  push:
+    branches: [ci]
+jobs:
+  staging:
+    name: deploy to stating
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      #AWS - ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'  # JDK 17을 사용하도록 설정
+          distribution: 'temurin'  # AdoptOpenJDK의 Temurin 배포판 사용
+
+      # Grant execute permission to gradlew
+      - name: Grant execute permission to gradlew
+        run: chmod +x ./gradlew
+
+      - name: Clean Build
+        run:
+          ./gradlew clean build
+
+        # gateway
+      - name: Gateway image to Amazon ECR
+        id: build-gateway-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ipho-repository
+          IMAGE_NAME: gateway
+          IMAGE_TAG: latest
+        run: |
+          cd gateway-service
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV
+
+      # auth-service
+      - name: Auth image to Amazon ECR
+        id: build-auth-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ipho-repository
+          IMAGE_NAME: auth
+          IMAGE_TAG: latest
+        run: |
+          cd auth-service
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV
+
+      # event-service
+      - name: Event image to Amazon ECR
+        id: build-event-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ipho-repository/event-service
+          IMAGE_NAME: event
+          IMAGE_TAG: latest
+        run: |
+          cd event-service
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV   
+
+      # payment-service
+      - name: Payment image to Amazon ECR
+        id: build-payment-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ipho-repository/payment-service
+          IMAGE_NAME: payment
+          IMAGE_TAG: latest
+        run: |
+          cd payment-service
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV
+
+      # seat-service
+      - name: Seat image to Amazon ECR
+        id: build-seat-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ipho-repository/seat-service
+          IMAGE_NAME: seat
+          IMAGE_TAG: latest
+        run: |
+          cd seat-service
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV  
+
+      # ticket-service
+      - name: Ticket image to Amazon ECR
+        id: build-ticket-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ipho-repository/ticket-service
+          IMAGE_NAME: ticket
+          IMAGE_TAG: latest
+        run: |
+          cd ticket-service
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV
+
+      # user-service
+      - name: User image to Amazon ECR
+        id: build-user-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ipho-repository/user-service
+          IMAGE_NAME: user
+          IMAGE_TAG: latest
+        run: |
+          cd user-service
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV

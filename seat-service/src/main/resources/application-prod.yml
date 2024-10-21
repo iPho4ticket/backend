@@ -16,7 +16,7 @@ spring:
 
   data:
     redis:
-      host: ipho-redis.mwkaex.ng.0001.apn2.cache.amazonaws.com:6379
+      host: ipho-redis.mwkaex.ng.0001.apn2.cache.amazonaws.com
       port: 6379
       username:
       password:

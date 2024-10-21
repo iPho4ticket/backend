@@ -1,20 +1,9 @@
-spring:
-  application:
-    name: payment-service
-  jpa:
-    open-in-view: false
-    hibernate:
-      ddl-auto: none
-    properties:
-      hibernate.default_batch_fetch_size: 100
-
----
-spring.config.activate.on-profile: local
-
 server:
   port: ${PAYMENT_PORT}
 
 spring:
+  application:
+    name: payment-service
   jpa:
     hibernate:
       ddl-auto: update

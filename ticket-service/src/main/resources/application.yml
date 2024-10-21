@@ -1,15 +1,14 @@
 server:
-  port: 19095
+  port: ${TICKET_PORT}
 
 spring:
   application:
     name: ticket-service
 
   datasource:
-    url: jdbc:postgresql://ipho-postgres.cheewwqkgq8q.ap-northeast-2.rds.amazonaws.com:5432/postgres
-    username: postgres
-    password: 1234
-    driver-class-name: org.postgresql.Driver
+    url: ${RDS_HOST}
+    username: ${RDS_USERNAME}
+    password: ${RDS_PASSWORD}
 
   jpa:
     hibernate:

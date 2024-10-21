@@ -12,7 +12,7 @@ spring:
 spring.config.activate.on-profile: local
 
 server:
-  port: 19096
+  port: ${PAYMENT_PORT}
 
 spring:
   jpa:
@@ -22,9 +22,9 @@ spring:
       hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
 
   datasource:
-    url: jdbc:postgresql://ipho-postgres.cheewwqkgq8q.ap-northeast-2.rds.amazonaws.com:5432/postgres
-    username: postgres
-    password: 1234
+    url: ${RDS_HOST}
+    username: ${RDS_USERNAME}
+    password: ${RDS_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
 kakao:

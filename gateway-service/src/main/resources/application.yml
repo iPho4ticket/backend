@@ -5,10 +5,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: ${ACTUATOR_ENDPOINTS}
+        include: health,info
   endpoint:
     health:
-      show-details: ${SHOW_HEALTH_DETAILS}
+      show-details: always
 
 spring:
   cloud:

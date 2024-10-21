@@ -47,7 +47,18 @@ jobs:
           IMAGE_TAG: latest
         run: |
           cd gateway-service
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
+          docker build \
+            --build-arg GATEWAY_PORT=${{ secrets.GATEWAY_PORT }} \
+            --build-arg AUTH_SERVICE_URI=${{ secrets.AUTH_SERVICE_URI }} \
+            --build-arg EVENT_SERVICE_URI=${{ secrets.EVENT_SERVICE_URI }} \
+            --build-arg SEAT_SERVICE_URI=${{ secrets.SEAT_SERVICE_URI }} \
+            --build-arg TICKET_SERVICE_URI=${{ secrets.TICKET_SERVICE_URI }} \
+            --build-arg PAYMENT_SERVICE_URI=${{ secrets.PAYMENT_SERVICE_URI }} \
+            --build-arg INTERNAL_SERVICE_URI=${{ secrets.INTERNAL_SERVICE_URI }} \
+            --build-arg AUTH_SERVICE_NAME=${{ secrets.AUTH_SERVICE_NAME }} \
+            --build-arg CACHE_EXPIRATION=${{ secrets.CACHE_EXPIRATION }} \
+            --build-arg CACHE_MAX_SIZE=${{ secrets.CACHE_MAX_SIZE }} \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV
 
@@ -61,7 +72,13 @@ jobs:
           IMAGE_TAG: latest
         run: |
           cd auth-service
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
+          docker build \
+            --build-arg AUTH_PORT=${{ secrets.AUTH_PORT }} \
+            --build-arg JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
+            --build-arg JWT_EXPIRATION_TIME=${{ secrets.JWT_EXPIRATION_TIME }} \
+            --build-arg USER_SERVICE_NAME=${{ secrets.USER_SERVICE_NAME }} \
+            --build-arg USER_SERVICE_URL=${{ secrets.USER_SERVICE_URL }} \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV
 
@@ -75,7 +92,12 @@ jobs:
           IMAGE_TAG: latest
         run: |
           cd event-service
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
+          docker build \
+            --build-arg EVENT_PORT=${{ secrets.EVENT_PORT }} \  
+            --build-arg RDS_HOST=${{ secrets.RDS_HOST }} \
+            --build-arg RDS_USERNAME=${{ secrets.RDS_USERNAME }} \
+            --build-arg RDS_PASSWORD=${{ secrets.RDS_PASSWORD }} \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV   
 
@@ -89,7 +111,14 @@ jobs:
           IMAGE_TAG: latest
         run: |
           cd payment-service
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
+           docker build \
+            --build-arg PAYMENT_PORT=${{ secrets.PAYMENT_PORT }} \
+            --build-arg KAKAO_PAY_SECRET_KEY=${{ secrets.KAKAO_PAY_SECRET_KEY }} \
+            --build-arg KAKAO_PAY_URL=${{ secrets.KAKAO_PAY_URL }} \
+            --build-arg RDS_HOST=${{ secrets.RDS_HOST }} \
+            --build-arg RDS_USERNAME=${{ secrets.RDS_USERNAME }} \
+            --build-arg RDS_PASSWORD=${{ secrets.RDS_PASSWORD }} \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV
 
@@ -103,7 +132,12 @@ jobs:
           IMAGE_TAG: latest
         run: |
           cd seat-service
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
+          docker build \
+            --build-arg SEAT_PORT=${{ secrets.SEAT_PORT }} \  
+            --build-arg RDS_HOST=${{ secrets.RDS_HOST }} \
+            --build-arg RDS_USERNAME=${{ secrets.RDS_USERNAME }} \
+            --build-arg RDS_PASSWORD=${{ secrets.RDS_PASSWORD }} \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV  
 
@@ -117,7 +151,12 @@ jobs:
           IMAGE_TAG: latest
         run: |
           cd ticket-service
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
+          docker build \
+            --build-arg TICKET_PORT=${{ secrets.TICKET_PORT }} \  
+            --build-arg RDS_HOST=${{ secrets.RDS_HOST }} \
+            --build-arg RDS_USERNAME=${{ secrets.RDS_USERNAME }} \
+            --build-arg RDS_PASSWORD=${{ secrets.RDS_PASSWORD }} \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV
 
@@ -131,6 +170,11 @@ jobs:
           IMAGE_TAG: latest
         run: |
           cd user-service
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
+          docker build \
+            --build-arg USER_PORT=${{ secrets.USER_PORT }} \  
+            --build-arg RDS_HOST=${{ secrets.RDS_HOST }} \
+            --build-arg RDS_USERNAME=${{ secrets.RDS_USERNAME }} \
+            --build-arg RDS_PASSWORD=${{ secrets.RDS_PASSWORD }} \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV

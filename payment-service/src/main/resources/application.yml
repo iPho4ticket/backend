@@ -21,4 +21,7 @@ kakao:
     secret-key: ${KAKAO_PAY_SECRET_KEY}
     url: ${KAKAO_PAY_URL}
 
-
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-service:8761/eureka/

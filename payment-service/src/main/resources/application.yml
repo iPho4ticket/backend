@@ -1,6 +1,11 @@
 server:
   port: ${PAYMENT_PORT}
-
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://eureka-service:8761/eureka/
 spring:
   application:
     name: payment-service
@@ -9,21 +14,12 @@ spring:
       ddl-auto: update
     properties:
       hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
-
   datasource:
     url: ${RDS_HOST}
     username: ${RDS_USERNAME}
     password: ${RDS_PASSWORD}
     driver-class-name: org.postgresql.Driver
-
 kakao:
   pay:
     secret-key: ${KAKAO_PAY_SECRET_KEY}
     url: ${KAKAO_PAY_URL}
-
-eureka:
-  client:
-    register-with-eureka: true
-    fetch-registry: true
-    service-url:
-      defaultZone: http://eureka-service:8761/eureka/

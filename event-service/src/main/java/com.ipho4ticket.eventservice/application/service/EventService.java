@@ -1,7 +1,7 @@
 package com.ipho4ticket.eventservice.application.service;
 
 import com.ipho4ticket.eventservice.application.dto.EventResponseDto;
-import com.ipho4ticket.eventservice.application.kevents.EventMakingEvent;
+import com.ipho4ticket.eventservice.application.service.exception.*;
 import com.ipho4ticket.eventservice.domain.model.Event;
 import com.ipho4ticket.eventservice.domain.model.QEvent;
 import com.ipho4ticket.eventservice.domain.repository.EventRepository;
@@ -12,7 +12,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.UUID;
 
 @Service
@@ -20,7 +19,6 @@ import java.util.UUID;
 public class EventService {
 
     private final EventRepository eventRepository;
-    private final EventProducer eventProducer;
 
     // 이벤트 생성
     @Transactional
@@ -28,16 +26,6 @@ public class EventService {
         Event event=new Event(request.title(),request.description(),request.date(),request.startTime(),request.endTime());
         eventRepository.save(event);
 
-        String topic = "event-making";
-        eventProducer.publishEventMakingEvent(new EventMakingEvent(
-                event.getEventId(),
-                event.getTitle(),
-                event.getDescription(),
-                event.getDate(),
-                event.getStartTime(),
-                event.getEndTime(),
-                topic
-        ));
         return toResponseDTO(event);
     }
 
@@ -57,6 +45,10 @@ public class EventService {
             builder.and(qEvent.description.containsIgnoreCase(description));
         }
         Page<Event> events= eventRepository.findAll(builder, pageable);
+        if (events.getTotalElements()==0){
+            throw new SearchNotExistsException("해당 검색 결과가 없습니다.");
+        }
+
         return events.map(this::toResponseDTO);
     }
 

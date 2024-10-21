@@ -1,6 +1,13 @@
 server:
   port: ${USER_PORT}
 
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://eureka-service:8761/eureka/
+
 spring:
   application:
     name: user-service
@@ -25,12 +32,8 @@ spring:
 springdoc:
   use-fqn: true
 
+
 # 로그 수준
 logging.level:
   org.hibernate.SQL: debug
   org.hibernate.type: trace
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://eureka-service:8761/eureka/

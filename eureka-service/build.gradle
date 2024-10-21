@@ -1,0 +1,17 @@
+plugins {
+    id 'java'
+    id 'java-conventions'
+    id 'spring-conventions'
+    id 'spring-cloud-conventions'
+    id 'org.springframework.boot'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-server'
+}
+

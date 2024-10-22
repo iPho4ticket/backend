@@ -189,7 +189,7 @@ jobs:
           IMAGE_NAME: eureka
           IMAGE_TAG: latest
         run: |
-          cd user-service
+          cd eureka-service
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV

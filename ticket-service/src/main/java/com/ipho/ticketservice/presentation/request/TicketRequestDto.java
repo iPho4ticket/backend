@@ -1,9 +1,10 @@
 package com.ipho.ticketservice.presentation.request;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
-public record TicketRequestDto(Long userId,
-                               UUID eventId,
+public record TicketRequestDto(UUID eventId,
+                               Long userId,
                                String seatNumber,
-                               Double price) {
+                               BigDecimal price) {
 }

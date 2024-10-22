@@ -1,0 +1,15 @@
+plugins {
+	id 'java-conventions'
+	id 'org.springframework.boot'
+	id 'spring-cloud-conventions'
+}
+
+dependencies {
+	implementation project(':common')
+	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+	implementation 'io.github.openfeign:feign-hc5'
+	implementation 'io.github.openfeign:feign-micrometer'
+}
+
+bootJar.enabled = false
+jar.enabled = true

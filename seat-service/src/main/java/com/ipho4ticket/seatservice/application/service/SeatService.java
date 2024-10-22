@@ -3,19 +3,16 @@ package com.ipho4ticket.seatservice.application.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ipho.common.dto.CancelTicketEvent;
 import com.ipho.common.dto.ConfirmSeatEvent;
-import com.ipho.common.dto.SeatBookingEvent;
-import com.ipho.common.dto.TicketMakingEvent;
+import com.ipho.common.dto.SeatRequestDto;
 import com.ipho4ticket.clienteventfeign.ClientEventFeign;
 import com.ipho4ticket.clienteventfeign.dto.EventResponseDto;
 import com.ipho4ticket.seatservice.application.config.ConcurrencyControl;
 import com.ipho4ticket.seatservice.application.service.exception.EventNotExistsException;
-import com.ipho4ticket.seatservice.application.service.exception.SeatAlreadyExistsException;
 import com.ipho4ticket.seatservice.application.service.exception.SeatNotExistsException;
 import com.ipho4ticket.seatservice.domain.model.Seat;
 import com.ipho4ticket.seatservice.domain.model.SeatStatus;
 import com.ipho4ticket.seatservice.domain.repository.SeatRepository;
 import com.ipho4ticket.seatservice.infra.TicketClientService;
-import com.ipho4ticket.seatservice.presentation.request.SeatRequestDto;
 import com.ipho4ticket.seatservice.application.dto.SeatResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -43,20 +40,20 @@ public class SeatService {
     private final EventProducer eventProducer;
     private final TicketClientService ticketClientService;
 
-    @Transactional
-    public SeatResponseDto createSeat(SeatRequestDto request) {
-        // 행 값+열 값 -> 좌석 생성
-        Seat seat=new Seat(request.eventId(),request.row(),request.column(),request.price());
-
-        if (seatRepository.findBySeatNumberAndEventId(seat.getSeatNumber(), seat.getEventId())!=null) {
-            throw new SeatAlreadyExistsException(seat.getSeatNumber() + "는 이미 등록된 좌석입니다.");
-        }
-        // 좌석 상태 변경 - 판매가능
-        seat.updateStatus(SeatStatus.AVAILABLE);
-
-        seatRepository.save(seat);
-        return toResponseDTO(seat);
-    }
+//    @Transactional
+//    public SeatResponseDto createSeat(SeatRequestDto request) {
+//        // 행 값+열 값 -> 좌석 생성
+//        Seat seat=new Seat(request.eventId(),request.row(),request.column(),request.price());
+//
+//        if (seatRepository.findBySeatNumberAndEventId(seat.getSeatNumber(), seat.getEventId())!=null) {
+//            throw new SeatAlreadyExistsException(seat.getSeatNumber() + "는 이미 등록된 좌석입니다.");
+//        }
+//        // 좌석 상태 변경 - 판매가능
+//        seat.updateStatus(SeatStatus.AVAILABLE);
+//
+//        seatRepository.save(seat);
+//        return toResponseDTO(seat);
+//    }
 
 
 
@@ -101,29 +98,29 @@ public class SeatService {
      * 1. 좌석이 redis에 없다면 -> TTL 초과되었다는 뜻 -> 전체 좌석 다시 저장
      * 2. 좌석이 redis에 있다면 -> redis에서 호출
      */
-    @SneakyThrows
-    @Transactional
-    public SeatResponseDto getSeat(UUID seatId) {
-        // Redis에서 좌석 데이터 조회
-        String cacheKey = "seat::" + seatId; // 캐시 키 설정
-        Object cachedSeat = redisTemplate.opsForValue().get(cacheKey);
-
-        // 좌석 데이터를 캐시에서 가져오거나 DB에서 조회
-        Seat seat = Optional.ofNullable(cachedSeat)
-                .map(seatObj -> objectMapper.convertValue(seatObj, Seat.class)) // 캐시에서 가져온 데이터를 Seat 객체로 변환
-                .orElseGet(() -> {
-                    // 좌석 존재하는지 확인
-                    Seat seatExist=seatRepository.findById(seatId).orElseThrow(() -> new SeatNotExistsException(seatId + "는 찾을 수 없는 좌석입니다."));
-                    // 좌석 정보를 DTO로 변환 후 캐싱
-                    List<SeatResponseDto> seatResponse = seatRepository.findAll().stream()
-                            .map(this::toResponseDTO)
-                            .collect(Collectors.toList());
-                    cacheSeats(seatResponse);
-
-                    return seatExist;
-                });
-        return toResponseDTO(seat);
-    }
+//    @SneakyThrows
+//    @Transactional
+//    public SeatResponseDto getSeat(UUID seatId) {
+//        // Redis에서 좌석 데이터 조회
+//        String cacheKey = "seat::" + seatId; // 캐시 키 설정
+//        Object cachedSeat = redisTemplate.opsForValue().get(cacheKey);
+//
+//        // 좌석 데이터를 캐시에서 가져오거나 DB에서 조회
+//        Seat seat = Optional.ofNullable(cachedSeat)
+//                .map(seatObj -> objectMapper.convertValue(seatObj, Seat.class)) // 캐시에서 가져온 데이터를 Seat 객체로 변환
+//                .orElseGet(() -> {
+//                    // 좌석 존재하는지 확인
+//                    Seat seatExist=seatRepository.findById(seatId).orElseThrow(() -> new SeatNotExistsException(seatId + "는 찾을 수 없는 좌석입니다."));
+//                    // 좌석 정보를 DTO로 변환 후 캐싱
+//                    List<SeatResponseDto> seatResponse = seatRepository.findAll().stream()
+//                            .map(this::toResponseDTO)
+//                            .collect(Collectors.toList());
+//                    cacheSeats(seatResponse);
+//
+//                    return seatExist;
+//                });
+//        return toResponseDTO(seat);
+//    }
 
 
     @Transactional
@@ -137,9 +134,7 @@ public class SeatService {
      * 좌석 예약 요청 -> 좌석 체크 후 감소 -> 티켓 생성 요청
      */
     @Transactional
-    public void checkSeat(SeatBookingEvent request) {
-        EventResponseDto event=clientEventFeign.getEvent(request.getEventId());
-
+    public void checkSeat(SeatRequestDto request) {
         Seat seat = Optional.ofNullable(seatRepository.findBySeatNumberAndEventId(request.getSeatNumber(), request.getEventId()))
                 .orElseThrow(() -> new SeatNotExistsException(request.getSeatNumber() + "는 찾을 수 없는 좌석입니다."));
 
@@ -147,7 +142,7 @@ public class SeatService {
             // 구매 가능하다면 상태 변경
             updateSeatToReserved(seat);
             ticketClientService.requestRegisterTopic("ticket-making", request.getEventId()).subscribe();
-            eventProducer.publishTicketMakingEvent(new TicketMakingEvent(request.getEventId(), request.getTicketId(),seat.getSeatId(),event.title(),request.getSeatNumber(),seat.getPrice()));
+            //eventProducer.publishTicketMakingEvent(new TicketMakingEvent(request.eventId(), request.seatNumber(),seat.getSeatId(),event.title(),request.seatNumber(),seat.getPrice()));
         }
     }
 

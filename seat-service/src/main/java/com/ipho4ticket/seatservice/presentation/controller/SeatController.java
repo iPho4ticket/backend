@@ -1,7 +1,6 @@
 package com.ipho4ticket.seatservice.presentation.controller;
 
 import com.ipho4ticket.seatservice.application.service.SeatService;
-import com.ipho4ticket.seatservice.presentation.request.SeatRequestDto;
 import com.ipho4ticket.seatservice.application.dto.SeatResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,12 +21,12 @@ public class SeatController {
     private final SeatService seatService;
 
     // 좌석 생성
-    @PostMapping
-    public ResponseEntity<?> createSeat(@Valid @RequestBody SeatRequestDto request){
-
-        SeatResponseDto seat=seatService.createSeat(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(seat);
-    }
+//    @PostMapping
+//    public ResponseEntity<?> createSeat(@Valid @RequestBody SeatRequestDto request){
+//
+//        SeatResponseDto seat=seatService.createSeat(request);
+//        return ResponseEntity.status(HttpStatus.CREATED).body(seat);
+//    }
 
     // 이벤트 좌석 전체 조회
     @GetMapping("/events/{event_id}")
@@ -42,11 +41,11 @@ public class SeatController {
     }
 
     // 이벤트 좌석 단건 조회
-    @GetMapping("/{seat_id}")
-    public ResponseEntity<SeatResponseDto> getSeat(@PathVariable UUID seat_id){
-        SeatResponseDto seat=seatService.getSeat(seat_id);
-        return ResponseEntity.ok(seat);
-    }
+//    @GetMapping("/{seat_id}")
+//    public ResponseEntity<SeatResponseDto> getSeat(@PathVariable UUID seat_id){
+//        SeatResponseDto seat=seatService.getSeat(seat_id);
+//        return ResponseEntity.ok(seat);
+//    }
 
     // 좌석 삭제
     @DeleteMapping("/{seat_id}")

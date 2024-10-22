@@ -2,6 +2,7 @@ package com.ipho.ticketservice.application.dto;
 
 import com.ipho.ticketservice.domain.model.Ticket;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public record TicketInfoDto(UUID ticketId,
@@ -11,7 +12,7 @@ public record TicketInfoDto(UUID ticketId,
                             String status,
                             String reservationTime,
                             String expirationTime,
-                            Double price,
+                            BigDecimal price,
                             String message) {
 
     public static TicketInfoDto of(Ticket ticket) {

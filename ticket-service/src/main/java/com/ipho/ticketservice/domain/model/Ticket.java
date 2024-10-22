@@ -3,6 +3,7 @@ package com.ipho.ticketservice.domain.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -26,14 +27,14 @@ public class Ticket {
 
     private String eventName;
     private String seatNumber;
-    private Double price;
+    private BigDecimal price;
 
     @Enumerated(EnumType.STRING)
     private TicketStatus status;
     private Timestamp reservationTime;
     private Timestamp expirationTime;
 
-    public Ticket(Long userId, UUID eventId, String seatNumber, Double price) {
+    public Ticket(Long userId, UUID eventId, String seatNumber, BigDecimal price) {
         this.userId = userId;
         this.eventId = eventId;
         this.seatNumber = seatNumber;

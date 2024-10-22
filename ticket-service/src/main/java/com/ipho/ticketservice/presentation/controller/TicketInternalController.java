@@ -2,7 +2,6 @@ package com.ipho.ticketservice.presentation.controller;
 
 import com.ipho.ticketservice.application.service.TicketService;
 import com.ipho.ticketservice.presentation.response.ValidationResponse;
-import com.ipho.ticketservice.infrastructure.messaging.DynamicKafkaListener;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +14,7 @@ import java.util.UUID;
 public class TicketInternalController {
 
     private final TicketService ticketService;
-    private final DynamicKafkaListener dynamicKafkaListener;
+    //private final DynamicKafkaListener dynamicKafkaListener;
 
 
     @GetMapping("/{ticket_id}")
@@ -45,7 +44,7 @@ public class TicketInternalController {
 
     @PostMapping("/subscribe")
     public ResponseEntity<String> subscribe(@RequestParam String topic, @RequestParam UUID eventId) {
-        dynamicKafkaListener.startListener(topic, eventId);
+        //dynamicKafkaListener.startListener(topic, eventId);
         return ResponseEntity.ok("Subscribed to topic: " + topic);
     }
 

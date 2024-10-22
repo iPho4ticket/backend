@@ -1,5 +1,6 @@
 package com.ipho.ticketservice.presentation.controller;
 
+import com.ipho.common.dto.SeatRequestDto;
 import com.ipho.ticketservice.presentation.request.TicketRequestDto;
 import com.ipho.ticketservice.application.service.TicketService;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +18,8 @@ public class TicketController {
     // 인증/인가는 방법은 추후 논의
 
     @PostMapping
-    public ResponseEntity<?> reservationTicket(@RequestBody TicketRequestDto ticketRequestDto) {
-        return ResponseEntity.ok(ticketService.reservationTicket(ticketRequestDto));
+    public ResponseEntity<?> reservationTicket(@RequestBody SeatRequestDto seatRequestDto) {
+        return ResponseEntity.ok(ticketService.reservationTicket(seatRequestDto));
     }
 
     @GetMapping("/{ticketId}")

@@ -1,13 +1,6 @@
 server:
   port: ${AUTH_PORT}  # Auth 서비스의 포트 설정
 
-eureka:
-  instance:
-    hostname: localhost
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka
-
 jwt:
   secret: ${JWT_SECRET_KEY}  # JWT 토큰 생성에 사용할 시크릿 키
   expiration: ${JWT_EXPIRATION_TIME}  # JWT 만료 시간

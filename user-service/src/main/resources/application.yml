@@ -24,14 +24,6 @@ spring:
 springdoc:
   use-fqn: true
 
-eureka:
-  instance:
-    hostname: localhost
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka
-
-
 # 로그 수준
 logging.level:
   org.hibernate.SQL: debug

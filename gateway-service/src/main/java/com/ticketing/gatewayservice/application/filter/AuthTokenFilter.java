@@ -57,6 +57,12 @@ public class AuthTokenFilter implements GlobalFilter {
 			return chain.filter(exchange);
 		}
 
+		// /api/v1/events로 시작하는 GET 요청에 대해서 토큰 검증을 생략
+		if (requestPath.startsWith("/api/v1/payments/approve") && "GET".equalsIgnoreCase(method)) {
+			log.info("이벤트 관련 GET 요청 - 토큰 검증 회피: {}", requestPath);
+			return chain.filter(exchange);
+		}
+
 		String authHeader = exchange.getRequest().getHeaders().getFirst(AUTHORIZATION);
 		if (!isValidBearerToken(authHeader))
 			return handleUnauthorized(exchange, "Authorization 헤더가 없거나 올바르지 않음.");

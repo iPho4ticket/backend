@@ -3,7 +3,7 @@ plugins {
     id 'ipho.java-conventions'
     id 'ipho.spring-conventions'
     id 'org.springframework.boot'
-    id 'io.spring.dependency-management'
+    id 'spring-cloud-conventions'
 }
 
 dependencies {

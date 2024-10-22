@@ -2,6 +2,7 @@ package com.ticketing.userservice.presentation;
 
 import static com.ticketing.userservice.application.dto.UserDto.*;
 
+import com.ticketing.userservice.application.dto.UserDto;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,7 +33,7 @@ public class UserInternalController {
 	 * @return 생성된 유저 정보를 반환합니다.
 	 */
 	@PostMapping
-	public Result createUser(@RequestBody Create dto) {
+	public UserDto.Result createUser(@RequestBody UserDto.Create dto) {
 		return userService.createUser(dto);
 	}
 

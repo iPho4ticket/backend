@@ -113,7 +113,7 @@ jobs:
         run: |
           cd payment-service
            docker build \
-            --build-arg SPRING_PROFILES_ACTIVE=local
+            --build-arg SPRING_PROFILES_ACTIVE=local \
             --build-arg PAYMENT_PORT=${{ secrets.PAYMENT_PORT }} \
             --build-arg KAKAO_PAY_SECRET_KEY=${{ secrets.KAKAO_PAY_SECRET_KEY }} \
             --build-arg KAKAO_PAY_URL=${{ secrets.KAKAO_PAY_URL }} \

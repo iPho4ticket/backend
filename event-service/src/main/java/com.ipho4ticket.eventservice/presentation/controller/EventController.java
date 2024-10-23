@@ -31,7 +31,6 @@ public class EventController {
     }
 
     // 이벤트 검색
-    @PreAuthorize("hasRole('"+ USER +"')")
     @GetMapping("/search")
     public ResponseEntity<Page<EventResponseDto>> searchEvents(
             @RequestParam(required = false) String title,
@@ -62,7 +61,6 @@ public class EventController {
     }
 
     // 이벤트 조회
-    @PreAuthorize("hasRole('"+ USER +"')")
     @GetMapping("/{event_id}")
     public ResponseEntity<EventResponseDto> getEvent(@PathVariable("event_id") UUID id){
         EventResponseDto event = eventService.getEvent(id);
@@ -70,7 +68,6 @@ public class EventController {
     }
 
     // 이벤트 전체 조회
-    @PreAuthorize("hasAnyRole('MASTER','MANAGER','USER')")
     @GetMapping
     public ResponseEntity<Page<EventResponseDto>> getEvents(
             @RequestParam(defaultValue = "0") int page,

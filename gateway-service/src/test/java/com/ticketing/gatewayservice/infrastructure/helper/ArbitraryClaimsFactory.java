@@ -15,7 +15,9 @@ public class ArbitraryClaimsFactory {
 	 */
 	public static Map<String, Object> claims() {
 		Map<String, Object> claims = new HashMap<>();
-		claims.put("user", "testUser");
+		claims.put("sub", "testUser");
+		claims.put("email", "test@email");
+		claims.put("role", "USER_ROLE");
 		return claims;
 	}
 }

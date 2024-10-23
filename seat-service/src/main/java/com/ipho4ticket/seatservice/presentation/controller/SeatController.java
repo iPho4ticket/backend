@@ -12,7 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
+import static com.ticketing.authzfilter.infrastructure.common.RoleType.Authority.*;
 import java.util.UUID;
 
 @RestController
@@ -23,7 +23,7 @@ public class SeatController {
     private final SeatService seatService;
 
     // 좌석 생성
-    @PreAuthorize("hasAnyRole('MASTER','MANAGER')")
+    @PreAuthorize("hasRole('"+ MANAGER +"')")
     @PostMapping
     public ResponseEntity<?> createSeat(@Valid @RequestBody SeatRequestDto request){
         SeatResponseDto seat=seatService.createSeat(request);
@@ -31,7 +31,7 @@ public class SeatController {
     }
 
     // 이벤트 좌석 전체 조회
-    @PreAuthorize("hasAnyRole('MASTER','MANAGER','USER')")
+    @PreAuthorize("hasRole('"+ USER +"')")
     @GetMapping("/events/{event_id}")
     public ResponseEntity<Page<SeatResponseDto>> getAllSeats(
             @PathVariable("event_id") UUID event_id,
@@ -44,7 +44,7 @@ public class SeatController {
     }
 
     // 이벤트 좌석 단건 조회
-    @PreAuthorize("hasAnyRole('MASTER','MANAGER','USER')")
+    @PreAuthorize("hasRole('"+ USER +"')")
     @GetMapping("/{seat_id}")
     public ResponseEntity<SeatResponseDto> getSeat(@PathVariable UUID seat_id){
         SeatResponseDto seat=seatService.getSeat(seat_id);
@@ -52,7 +52,7 @@ public class SeatController {
     }
 
     // 좌석 삭제
-    @PreAuthorize("hasAnyRole('MASTER','MANAGER')")
+    @PreAuthorize("hasRole('"+ MANAGER +"')")
     @DeleteMapping("/{seat_id}")
     public ResponseEntity<?> deleteSeat(@PathVariable UUID seat_id){
         seatService.deleteSeat(seat_id);

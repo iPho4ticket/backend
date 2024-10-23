@@ -38,7 +38,7 @@
 
 - **인프라 설계도**
     
-    ![인프라_설계도](https://github.com/user-attachments/assets/25895925-1e0e-4624-8742-1d49c5666d7f)
+    ![인프라 구조도_수정_10-23-14-31](https://github.com/user-attachments/assets/d17c3e6b-6ff2-47c6-a13c-802e38a38a99)
 
     
 

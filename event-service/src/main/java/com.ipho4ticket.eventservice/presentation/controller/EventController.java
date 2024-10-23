@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -21,12 +22,15 @@ public class EventController {
     private final EventService eventService;
 
     // 이벤트 생성
+    @PreAuthorize("hasAnyRole('MASTER','MANAGER')")
     @PostMapping
     public ResponseEntity<EventResponseDto> createEvent(@RequestBody EventRequestDto request){
         EventResponseDto event=eventService.createEvent(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(event);
     }
+
     // 이벤트 검색
+    @PreAuthorize("hasAnyRole('MASTER','MANAGER','USER')")
     @GetMapping("/search")
     public ResponseEntity<Page<EventResponseDto>> searchEvents(
             @RequestParam(required = false) String title,
@@ -39,6 +43,7 @@ public class EventController {
     }
 
     // 이벤트 수정
+    @PreAuthorize("hasAnyRole('MASTER','MANAGER')")
     @PatchMapping("/{event_id}")
     public ResponseEntity<EventResponseDto> updateEvent(
             @PathVariable("event_id") UUID id,
@@ -48,6 +53,7 @@ public class EventController {
     }
 
     // 이벤트 삭제
+    @PreAuthorize("hasAnyRole('MASTER','MANAGER')")
     @DeleteMapping("/{event_id}")
     public ResponseEntity<?> deleteEvent(@PathVariable("event_id") UUID id){
         eventService.deleteEvent(id);
@@ -55,6 +61,7 @@ public class EventController {
     }
 
     // 이벤트 조회
+    @PreAuthorize("hasAnyRole('MASTER','MANAGER','USER')")
     @GetMapping("/{event_id}")
     public ResponseEntity<EventResponseDto> getEvent(@PathVariable("event_id") UUID id){
         EventResponseDto event = eventService.getEvent(id);
@@ -62,6 +69,7 @@ public class EventController {
     }
 
     // 이벤트 전체 조회
+    @PreAuthorize("hasAnyRole('MASTER','MANAGER','USER')")
     @GetMapping
     public ResponseEntity<Page<EventResponseDto>> getEvents(
             @RequestParam(defaultValue = "0") int page,

@@ -12,6 +12,9 @@ plugins {
 dependencies {
 	implementation project(':common')
 
+	// auth-filter
+	implementation project(':authz-filter')
+
 	// kafka
 	implementation 'org.springframework.kafka:spring-kafka'
 

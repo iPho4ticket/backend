@@ -7,7 +7,7 @@ import com.ipho4ticket.paymentservice.application.service.PaymentService;
 import com.ipho4ticket.paymentservice.infrastructure.external.KakaoPayService;
 import com.ipho4ticket.paymentservice.presentation.request.PaymentRequestDTO;
 import com.ipho4ticket.paymentservice.presentation.response.PaymentResponseDTO;
-import java.nio.file.AccessDeniedException;
+import com.ticketing.authzfilter.security.SecurityUtil;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import static com.ticketing.authzfilter.infrastructure.common.RoleType.Authority.*;
 
 @RestController
 @RequestMapping("/api/v1/payments")
@@ -30,14 +32,15 @@ public class PaymentController {
 
     private final PaymentService paymentService;
     private final KakaoPayService kakaoPayService;
-    Long exampleUserId = 1L;
 
     // 1. 결제 등록 (POST)
     @PostMapping
+    @PreAuthorize("hasRole('"+ USER +"')")
     public ResponseEntity<Map<String, String>> createPayment(
         @RequestBody PaymentRequestDTO request) {
         // 결제 생성 및 카카오페이 결제 준비
-        ReadyResponse readyResponse = paymentService.createPayment(request);
+        Long userId = SecurityUtil.getUserId();
+        ReadyResponse readyResponse = paymentService.createPayment(request, userId);
 
         // 결제 준비 완료 후, 카카오페이 결제 페이지로 리다이렉트 -> 프론트 구현 시 해당 방법으로 변경
         // 결제 준비 완료 후, 리다이렉트 URL을 JSON 응답으로 반환
@@ -47,6 +50,7 @@ public class PaymentController {
     }
 
     // 결제 승인 요청을 처리하는 메소드
+    // 카카오페이 리다이랙팅 url로 보안설정 X
     @GetMapping("/approve")
     public ResponseEntity<PaymentResponseDTO> approvePayment(
         @RequestParam("payment_id") UUID paymentId,
@@ -64,9 +68,11 @@ public class PaymentController {
 
     // 결제 취소 요청을 처리하는 메소드
     @PostMapping("/cancel")
+    @PreAuthorize("hasRole('"+ USER +"')")
     public ResponseEntity<ApproveResponse> cancelPayment(
         @RequestParam("payment_id") UUID paymentId,
-        @RequestParam("tid") String tid) throws AccessDeniedException {
+        @RequestParam("tid") String tid) {
+        Long userId = SecurityUtil.getUserId();
 
         // 1. 결제 정보 조회
         PaymentInfoResponse paymentInfo = kakaoPayService.getPaymentInfo(tid);
@@ -79,7 +85,7 @@ public class PaymentController {
         Integer cancelVatAmount = paymentInfo.getAmount().getVat();
 
         // 3. 결제 취소 요청
-        ApproveResponse cancelResponse = paymentService.cancelPayment(paymentId, exampleUserId, tid,
+        ApproveResponse cancelResponse = paymentService.cancelPayment(paymentId, userId, tid,
             cancelAmount, cancelTaxFreeAmount, cancelVatAmount);
 
         // 취소 완료된 결제 정보를 반환
@@ -88,27 +94,28 @@ public class PaymentController {
 
     // 2. 결제 내역 단건 조회 (GET)
     @GetMapping("/{payment_id}")
+    @PreAuthorize("hasRole('"+ USER +"')")
     public ResponseEntity<PaymentResponseDTO> getPayment(@PathVariable UUID payment_id)
-        throws AccessDeniedException {
-        PaymentResponseDTO payment = paymentService.getPayment(payment_id, exampleUserId);
+    {
+        Long userId = SecurityUtil.getUserId();
+        PaymentResponseDTO payment = paymentService.getPayment(payment_id, userId);
         return ResponseEntity.ok(payment);
     }
 
     // 3. 결제 목록 조회 (GET)
     @GetMapping
+    @PreAuthorize("hasRole('"+ USER +"')")
     public ResponseEntity<Page<PaymentResponseDTO>> getAllPayments(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size
     ) {
-
-        // 현재 사용자 ID 가져오기 (Spring Security)
-        // Long currentUserId = ((CustomUserDetails) authentication.getPrincipal()).getUserId();
+        Long userId = SecurityUtil.getUserId();
 
         // Pageable 객체 생성 (페이지 번호와 페이지 크기)
         Pageable pageable = PageRequest.of(page, size);
 
         // 서비스에서 결제 목록 조회
-        Page<PaymentResponseDTO> paymentPage = paymentService.getAllPayments(exampleUserId,
+        Page<PaymentResponseDTO> paymentPage = paymentService.getAllPayments(userId,
             pageable);
 
         return ResponseEntity.ok(paymentPage);
@@ -117,6 +124,7 @@ public class PaymentController {
 
     // 4. 결제 내역 검색 (GET)
     @GetMapping("/search")
+    @PreAuthorize("hasRole('"+ MASTER +"')")
     public ResponseEntity<Page<PaymentResponseDTO>> searchPayments(
         @RequestParam Map<String, String> searchParams,
         @RequestParam(defaultValue = "0") int page,   // 페이지 번호 (기본값 0)

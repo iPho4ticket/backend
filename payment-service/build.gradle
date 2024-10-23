@@ -9,6 +9,7 @@ plugins {
 dependencies {
     implementation project(":client-ticket-feign")
     implementation project(":common")
+    implementation project(":authz-filter")
 
     // Feign
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'

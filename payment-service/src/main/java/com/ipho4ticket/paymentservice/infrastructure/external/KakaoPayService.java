@@ -52,11 +52,11 @@ public class KakaoPayService implements PaymentProcessor {
 
     // 카카오페이 결제 승인
     @Override
-    public ApproveResponse payApprove(String tid, String pgToken) {
+    public ApproveResponse payApprove(UUID payment_id, String tid, String pgToken) {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("cid", "TC0ONETIME");
         parameters.put("tid", tid);
-        parameters.put("partner_order_id", "1234567890");
+        parameters.put("partner_order_id", String.valueOf(payment_id));
         parameters.put("partner_user_id", "userId");
         parameters.put("pg_token", pgToken);
 

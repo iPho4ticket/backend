@@ -34,10 +34,10 @@ public class PaymentService {
     private final ClientTicketFeign clientTicketFeign;
 
     @Transactional
-    public ReadyResponse createPayment(PaymentRequestDTO request) {
-        String itemName = validateTicket(request.ticketId(), request.userId());
+    public ReadyResponse createPayment(PaymentRequestDTO request, Long userId) {
+        String itemName = validateTicket(request.ticketId(), userId);
 
-        Payment payment = getOrCreatePayment(request);
+        Payment payment = getOrCreatePayment(request, userId);
 
         try {
             return initiatePayment(request, payment, itemName);
@@ -106,14 +106,19 @@ public class PaymentService {
     }
 
     // 2. 결제 가져오기 또는 새로 생성
-    private Payment getOrCreatePayment(PaymentRequestDTO request) {
+    private Payment getOrCreatePayment(PaymentRequestDTO request, Long userId) {
         return paymentRepository.findByTicketId(request.ticketId())
             .map(payment -> {
                 validatePaymentStatus(payment);
                 return payment;
             })
-            .orElseGet(() -> createNewPayment(request));
+            .orElseGet(() -> {
+                Payment newPayment = createNewPayment(request, userId);
+                // 결제를 바로 저장하여 paymentId를 생성
+                return paymentRepository.save(newPayment);
+            });
     }
+
 
     // 3. 결제 준비
     private ReadyResponse initiatePayment(PaymentRequestDTO request, Payment payment,
@@ -132,7 +137,7 @@ public class PaymentService {
     private ApproveResponse processApproval(Payment payment, String pgToken) {
         PaymentProcessor processor = paymentProcessorFactory.getPaymentProcessor(
             payment.getMethod());
-        ApproveResponse approveResponse = processor.payApprove(payment.getTid(), pgToken);
+        ApproveResponse approveResponse = processor.payApprove(payment.getPaymentId(), payment.getTid(), pgToken);
         updatePaymentStatus(payment, PaymentStatus.COMPLETED);
         return approveResponse;
     }
@@ -168,9 +173,9 @@ public class PaymentService {
 
     // Helper methods
 
-    private Payment createNewPayment(PaymentRequestDTO request) {
+    private Payment createNewPayment(PaymentRequestDTO request, Long userId) {
         return Payment.builder()
-            .userId(request.userId())
+            .userId(userId)
             .ticketId(request.ticketId())
             .method(request.paymentMethod())
             .amount(BigDecimal.valueOf(request.amount()))

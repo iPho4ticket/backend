@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -19,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CaffeineCacheService implements CacheService {
 
-	private final Cache<String, Map<String, Object>> localCache;
+	private Cache<String, Map<String, Object>> localCache;
 	@Value("${cache.caffeine.expiration}")
 	private long expirationTime;  // 캐시 만료 시간
 	@Value("${cache.caffeine.max-size}")
@@ -29,7 +30,9 @@ public class CaffeineCacheService implements CacheService {
 	 * CaffeineCacheService의 생성자입니다.
 	 * 캐시 만료 시간과 크기를 외부 설정으로 받아 초기화합니다.
 	 */
-	public CaffeineCacheService() {
+	@PostConstruct
+	public void initCache() {
+
 		this.localCache = Caffeine.newBuilder()
 			.expireAfterWrite(expirationTime, TimeUnit.SECONDS)  // 캐시 만료 시간 설정
 			.maximumSize(maxSize)  // 캐시 최대 크기 설정

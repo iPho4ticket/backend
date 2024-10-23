@@ -14,12 +14,14 @@ dependencies {
 	implementation project(':common')
 	implementation project(':client-event-feign')
 
-	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	// auth-filter
+	implementation project(':authz-filter')
 
+	// webflux
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
 	// Feign
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
-	// implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
 
 	// aop
 	implementation 'org.springframework.boot:spring-boot-starter-aop'

@@ -26,6 +26,8 @@ public class AuthTokenResponseHandler {
 	 */
 	public static Mono<Void> handleSuccess(ServerWebExchange exchange, Map<String, Object> claims,
 		GatewayFilterChain chain) {
+		// 헤더에 유저 정보 추가
+		addHeadersToRequest(exchange, claims);
 		exchange.getResponse().setStatusCode(HttpStatus.OK);  // 응답 상태 200 설정
 		return chain.filter(exchange);
 	}
@@ -66,5 +68,24 @@ public class AuthTokenResponseHandler {
 	public static Mono<Void> handleForbiddenAccess(ServerWebExchange exchange) {
 		exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
 		return exchange.getResponse().setComplete();
+	}
+
+	/**
+	 * 요청의 헤더에 JWT 클레임 정보를 추가하는 메서드입니다.
+	 * <p>
+	 * JWT 토큰에서 추출된 사용자 ID, 이메일, 역할 정보를 HTTP 요청 헤더에 추가하여,
+	 * 이후 서비스 레이어에서 해당 정보를 사용할 수 있도록 합니다.
+	 * 추가된 헤더는 X-User-Id, X-Email, X-Role로 전달됩니다.
+	 *
+	 * @param exchange 서버 교환 객체 (요청 및 응답 정보를 포함)
+	 * @param claims JWT에서 추출한 클레임 정보 (사용자 ID, 이메일, 역할 등)
+	 */
+	private static void addHeadersToRequest(ServerWebExchange exchange, Map<String, Object> claims) {
+		exchange.getRequest()
+			.mutate()
+			.header("X-User-Id", claims.get("sub").toString())   // 사용자 ID를 헤더에 추가
+			.header("X-Email", claims.get("email").toString())   // 이메일을 헤더에 추가
+			.header("X-Role", claims.get("role").toString())     // 역할 정보를 헤더에 추가
+			.build();
 	}
 }

@@ -35,6 +35,7 @@ public class SecurityConfig {
 		"/api/v1/auth/**"
 	};
 	private static final String[] GET_ONLY_PUBLIC_MATCHERS = {
+		"/api/v1/payments/approve/**",
 		"/api/v1/events",
 		"/api/v1/events/search",
 		"/api/v1/events/{event_id}"

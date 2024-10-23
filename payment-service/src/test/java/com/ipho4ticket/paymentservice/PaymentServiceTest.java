@@ -61,9 +61,6 @@
 //    @Mock
 //    private PaymentProcessor paymentProcessor;
 //
-//    @Mock
-//    private KakaoPayService kakaoPayService;
-//
 //    @InjectMocks
 //    private PaymentService paymentService;
 //
@@ -105,11 +102,12 @@
 //    void 결제_요청_성공() {
 //        // 결제 요청 DTO 생성
 //        PaymentRequestDTO requestDTO = new PaymentRequestDTO(
-//            userId,
 //            ticketId,
 //            PaymentMethod.KAKAO_PAY,
 //            100L
 //        );
+//        Long userId = 1L;
+//
 //
 //        // Feign 클라이언트 모킹 설정
 //        ValidationResponse validationResponse = new ValidationResponse(true, "Valid ticket");
@@ -125,7 +123,7 @@
 //        when(paymentRepository.save(any(Payment.class))).thenReturn(payment);
 //
 //        // 결제 요청 실행
-//        ReadyResponse response = paymentService.createPayment(requestDTO);
+//        ReadyResponse response = paymentService.createPayment(requestDTO, userId);
 //
 //        // 응답 검증
 //        assertNotNull(response);
@@ -136,6 +134,9 @@
 //
 //    @Test
 //    void 결제_승인_성공_티켓_상태_변경_재시도_및_취소() {
+//        // 결제 ID로 사용할 UUID
+//        UUID paymentId = payment.getPaymentId();  // payment에 저장된 paymentId를 사용
+//
 //        // 결제 상태를 PENDING으로 설정
 //        payment.updateStatus(PaymentStatus.PENDING);
 //
@@ -148,7 +149,10 @@
 //        // 결제 승인 처리 (payApprove 호출 인자 값 정확하게 설정)
 //        when(paymentProcessorFactory.getPaymentProcessor(PaymentMethod.KAKAO_PAY))
 //            .thenReturn(paymentProcessor);
-//        when(paymentProcessor.payApprove(eq("T123456789"), eq("pgTokenSample")))
+//        when(paymentProcessor.payApprove(
+//            eq(paymentId),  // 수정: payment에 저장된 paymentId 사용
+//            eq("T123456789"),
+//            eq("pgTokenSample")))
 //            .thenReturn(approveResponse);
 //
 //        // Mock the response of clientTicketFeign.changeTicketStatus to return a successful ValidationResponse
@@ -165,9 +169,10 @@
 //
 //        // 결제 저장 확인
 //        verify(paymentRepository, times(1)).save(any(Payment.class));  // 승인 후 두 번 저장
-//        verify(paymentProcessor, times(1)).payApprove(eq("T123456789"), eq("pgTokenSample"));
+//        verify(paymentProcessor, times(1)).payApprove(eq(paymentId), eq("T123456789"), eq("pgTokenSample"));
 //        verify(clientTicketFeign, times(1)).changeTicketStatus(ticketId);  // 티켓 상태 변경 호출 확인
 //    }
+//
 //
 //
 //    @Test

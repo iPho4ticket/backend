@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.ipho4ticket.seatservice", "com.ticketing.authzfilter"})
 @EnableFeignClients(basePackages = "com.ipho4ticket.clienteventfeign")
 public class SeatServiceApplication {
 

@@ -14,7 +14,10 @@ dependencies {
 
     implementation project(':common')
 
-    //
+    // auth-filter
+    implementation project(':authz-filter')
+
+    // webflux
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
     // aop

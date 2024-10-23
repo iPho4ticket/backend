@@ -44,6 +44,11 @@ public class AuthTokenFilter implements GlobalFilter {
 		String requestPath = exchange.getRequest().getURI().getPath();
 		String method = exchange.getRequest().getMethod().name();
 
+		// 결제 리다이렉트 회피
+		if (requestPath.startsWith("/api/v1/payments/approve") && "GET".equalsIgnoreCase(method)) {
+			log.info("결제 관련 GET 요청 - 토큰 검증 회피: {}", requestPath);
+			return chain.filter(exchange);
+		}
 
 		// auth 관련 경로 회피 (로그인, 회원가입 등)
 		if (requestPath.startsWith("/api/v1/auth/")) {

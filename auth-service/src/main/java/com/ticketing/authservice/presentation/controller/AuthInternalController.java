@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
  * Auth 서버와의 통신을 통해 JWT 토큰을 검증하는 등의 기능을 제공합니다.
  */
 @RestController
-@RequestMapping("api/v1/internal/auth")
+@RequestMapping("/api/v1/internal/auth")
 @RequiredArgsConstructor
 public class AuthInternalController {
 

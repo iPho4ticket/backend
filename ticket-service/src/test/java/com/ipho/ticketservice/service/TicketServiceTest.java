@@ -11,12 +11,10 @@ import com.ipho.ticketservice.domain.model.Ticket;
 import com.ipho.ticketservice.domain.model.TicketStatus;
 import com.ipho.ticketservice.domain.repository.TicketRepository;
 import com.ipho.ticketservice.presentation.exception.TicketException;
-import com.ipho.ticketservice.presentation.exception.ValidationException;
 import com.ipho.ticketservice.presentation.response.ValidationResponse;
 import com.ipho.ticketservice.infrastructure.messaging.DynamicKafkaListener;
 import com.ipho.ticketservice.presentation.request.TicketRequestDto;
 import com.ipho.ticketservice.presentation.response.TicketResponseDto;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,8 +52,8 @@ public class TicketServiceTest {
     @DisplayName("티켓 예매 + Reservation 이벤트 발행")
     void reservationTicket() throws Exception {
 
-        TicketRequestDto requestDto = new TicketRequestDto(1L, UUID.randomUUID(), "A1", 10000.0);
-        Ticket ticket = new Ticket(requestDto.userId(), requestDto.eventId(), requestDto.seatNumber(), requestDto.price());
+        TicketRequestDto requestDto = new TicketRequestDto(UUID.randomUUID(), "A1", 10000.0);
+        Ticket ticket = new Ticket(1L, requestDto.eventId(), requestDto.seatNumber(), requestDto.price());
         ticketRepository.save(ticket);
 
         dynamicKafkaListener.startListener(TicketTopic.SEAT_BOOKING.getTopic(), requestDto.eventId());
@@ -100,15 +98,14 @@ public class TicketServiceTest {
     @DisplayName("티켓 조회")
     void searchTicketInfo() {
         // Ticket 생성
-        TicketRequestDto requestDto = new TicketRequestDto(1L, UUID.randomUUID(), "A1", 10000.0);
-        Ticket ticket = new Ticket(requestDto.userId(), requestDto.eventId(), requestDto.seatNumber(), requestDto.price());
+        TicketRequestDto requestDto = new TicketRequestDto(UUID.randomUUID(), "A1", 10000.0);
+        Ticket ticket = new Ticket(1L, requestDto.eventId(), requestDto.seatNumber(), requestDto.price());
         ticketRepository.save(ticket);
 
         // Ticket 조회
-        TicketInfoDto dto = ticketService.searchTicketInfo(ticket.getUuid());
+        TicketInfoDto dto = ticketService.searchTicketInfo(ticket.getUuid(), 1L);
 
         assertThat(dto.ticketId()).isEqualTo(ticket.getUuid());
-        assertThat(dto.userId()).isEqualTo(requestDto.userId());
         assertThat(dto.eventId()).isEqualTo(requestDto.eventId());
         assertThat(dto.seatNumber()).isEqualTo(requestDto.seatNumber());
         assertThat(dto.price()).isEqualTo(requestDto.price());
@@ -120,12 +117,12 @@ public class TicketServiceTest {
     @DisplayName("티켓 취소 + Cancel 이벤트 발행")
     void cancelTicket() throws Exception {
         // Ticket 생성
-        TicketRequestDto requestDto = new TicketRequestDto(1L, UUID.randomUUID(), "A1", 10000.0);
-        Ticket ticket = new Ticket(requestDto.userId(), requestDto.eventId(), requestDto.seatNumber(), requestDto.price());
+        TicketRequestDto requestDto = new TicketRequestDto(UUID.randomUUID(), "A1", 10000.0);
+        Ticket ticket = new Ticket(1L, requestDto.eventId(), requestDto.seatNumber(), requestDto.price());
         ticketRepository.save(ticket);
 
         // Ticket 취소
-        TicketResponseDto responseDto = ticketService.cancelTicket(ticket.getUuid());
+        TicketResponseDto responseDto = ticketService.cancelTicket(ticket.getUuid(), 1L);
 
         // Cancel Ticket Response Checking
         assertThat(responseDto.ticketId()).isEqualTo(ticket.getUuid());
@@ -158,8 +155,8 @@ public class TicketServiceTest {
     @DisplayName("내부 API - 결제 전 Ticket Validation Checking")
     void validateTicket() {
         // Ticket 생성
-        TicketRequestDto requestDto = new TicketRequestDto(1L, UUID.randomUUID(), "A1", 10000.0);
-        Ticket ticket = new Ticket(requestDto.userId(), requestDto.eventId(), requestDto.seatNumber(), requestDto.price());
+        TicketRequestDto requestDto = new TicketRequestDto(UUID.randomUUID(), "A1", 10000.0);
+        Ticket ticket = new Ticket(1L, requestDto.eventId(), requestDto.seatNumber(), requestDto.price());
         // Ticket Validation - 조건 1. Pending
         ticket.pending();
         // Ticket Validation - 조건 2. expirationTime > CurrentTime ( 현재 임의로 reservationTime + 3일로 지정 )
@@ -175,8 +172,8 @@ public class TicketServiceTest {
     @Test
     @DisplayName("내부 API - 결제 후 Ticket Status 변경 ( CONFIRMED )")
     void completePayment() {
-        TicketRequestDto requestDto = new TicketRequestDto(1L, UUID.randomUUID(), "A1", 10000.0);
-        Ticket ticket = new Ticket(requestDto.userId(), requestDto.eventId(), requestDto.seatNumber(), requestDto.price());
+        TicketRequestDto requestDto = new TicketRequestDto(UUID.randomUUID(), "A1", 10000.0);
+        Ticket ticket = new Ticket(1L, requestDto.eventId(), requestDto.seatNumber(), requestDto.price());
         ticket.addEventName("EventName");
         ticket.pending();
         ticketRepository.save(ticket);
@@ -196,12 +193,12 @@ public class TicketServiceTest {
     @Test
     @DisplayName("티켓 예매 생성 - ( Failure Case, 취소되지 않은 티켓 )")
     void duplicateTicket_FailureCase() {
-        TicketRequestDto requestDto = new TicketRequestDto(1L, UUID.randomUUID(), "A1", 10000.0);
-        ticketService.reservationTicket(requestDto);
+        TicketRequestDto requestDto = new TicketRequestDto(UUID.randomUUID(), "A1", 10000.0);
+        ticketService.reservationTicket(requestDto, 1L);
 
         // cancel 상태를 제외한 ( 처리 중이거나, 결제가 완료됨 ) 상태에 대해서는 전부 예외 던진다.
         TicketException exception = assertThrows(TicketException.class, () -> {
-            ticketService.reservationTicket(requestDto);
+            ticketService.reservationTicket(requestDto, 1L);
         });
 
         assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -211,17 +208,15 @@ public class TicketServiceTest {
     @Test
     @DisplayName("티켓 예매 생성 - ( Success Case, 취소된 티켓 )")
     void duplicateTicket_SuccessCase() {
-        TicketRequestDto requestDto = new TicketRequestDto(1L, UUID.randomUUID(), "A1", 10000.0);
-        TicketResponseDto responseDto = ticketService.reservationTicket(requestDto);
-        ticketService.cancelTicket(responseDto.ticketId());
+        TicketRequestDto requestDto = new TicketRequestDto(UUID.randomUUID(), "A1", 10000.0);
+        TicketResponseDto responseDto = ticketService.reservationTicket(requestDto, 1L);
+        ticketService.cancelTicket(responseDto.ticketId(), 1L);
 
-        TicketResponseDto result = ticketService.reservationTicket(requestDto);
+        TicketResponseDto result = ticketService.reservationTicket(requestDto, 1L);
 
         // 완전히 새로운 티켓을 생성
         assertThat(result.ticketId()).isNotEqualTo(responseDto.ticketId());
         assertThat(result.ticketStatus()).isNotEqualTo(TicketStatus.CANCELED);
     }
-
-
 
 }

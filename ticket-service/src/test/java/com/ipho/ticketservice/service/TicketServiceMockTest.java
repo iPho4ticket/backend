@@ -48,11 +48,11 @@ public class TicketServiceMockTest {
     @Test
     @DisplayName("티켓 예매")
     void reservationTicket() {
-        TicketRequestDto requestDto = new TicketRequestDto(1L, UUID.randomUUID(), "A1", 10000.0);
-        Ticket savedTicket = new Ticket(requestDto.userId(), requestDto.eventId(), requestDto.seatNumber(), requestDto.price());
+        TicketRequestDto requestDto = new TicketRequestDto(UUID.randomUUID(), "A1", 10000.0);
+        Ticket savedTicket = new Ticket(1L, requestDto.eventId(), requestDto.seatNumber(), requestDto.price());
         when(ticketRepository.save(any(Ticket.class))).thenReturn(savedTicket);
 
-        TicketResponseDto responseDto = ticketService.reservationTicket(requestDto);
+        TicketResponseDto responseDto = ticketService.reservationTicket(requestDto, 1L);
 
         assertNotNull(responseDto);
         assertEquals(savedTicket.getUuid(), responseDto.ticketId());
@@ -65,7 +65,7 @@ public class TicketServiceMockTest {
         Ticket ticket = new Ticket(1L, UUID.randomUUID(), "A1", 10000.0);
         when(ticketRepository.findByUuid(ticket.getUuid())).thenReturn(Optional.of(ticket));
 
-        TicketInfoDto infoDto = ticketService.searchTicketInfo(ticket.getUuid());
+        TicketInfoDto infoDto = ticketService.searchTicketInfo(ticket.getUuid(), 1L);
         
         assertNotNull(infoDto);
         assertEquals(ticket.getSeatNumber(), infoDto.seatNumber());
@@ -77,7 +77,7 @@ public class TicketServiceMockTest {
         Ticket ticket = new Ticket(1L, UUID.randomUUID(), "A1", 10000.0);
         when(ticketRepository.findByUuidAndStatusNot(ticket.getUuid(), TicketStatus.CANCELED)).thenReturn(Optional.of(ticket));
 
-        TicketResponseDto responseDto = ticketService.cancelTicket(ticket.getUuid());
+        TicketResponseDto responseDto = ticketService.cancelTicket(ticket.getUuid(), 1L);
 
         assertNotNull(responseDto);
         assertEquals(ticket.getUuid(), responseDto.ticketId());

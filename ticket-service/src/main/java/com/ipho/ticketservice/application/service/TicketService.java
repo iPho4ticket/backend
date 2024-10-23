@@ -34,28 +34,31 @@ public class TicketService {
     private final SeatClientService seatClientService;
 
     @Transactional
-    public TicketResponseDto reservationTicket(TicketRequestDto dto) {
-        Ticket ticket = ticketRepository.processingByDuplicateTicket(dto.userId(), dto.seatNumber(), dto.eventId(), TicketStatus.CANCELED).orElse(null);
+    public TicketResponseDto reservationTicket(TicketRequestDto dto, Long userId) {
+        Ticket ticket = ticketRepository.processingByDuplicateTicket(userId, dto.seatNumber(), dto.eventId(), TicketStatus.CANCELED).orElse(null);
 
         if (ticket != null) {
             throw new TicketException(HttpStatus.BAD_REQUEST, "pending ticket for that user already exists.");
         }
-        ticket = new Ticket(dto.userId(), dto.eventId(), dto.seatNumber(), dto.price());
+        ticket = new Ticket(userId, dto.eventId(), dto.seatNumber(), dto.price());
         ticketRepository.save(ticket);
         seatClientService.requestRegisterTopic(TicketTopic.SEAT_BOOKING.getTopic(), dto.eventId()).subscribe();
-        eventProducer.publishSeatBookingEvent(new SeatBookingEvent(ticket.getUuid(), dto.eventId(), dto.userId(), dto.seatNumber()));
+        eventProducer.publishSeatBookingEvent(new SeatBookingEvent(ticket.getUuid(), dto.eventId(), userId, dto.seatNumber()));
 
         return TicketResponseDto.createTicket(ticket);
     }
 
     @Transactional(readOnly = true)
-    public TicketInfoDto searchTicketInfo(UUID ticketId) {
-        return TicketInfoDto.of(ticketRepository.findByUuid(ticketId).orElseThrow(() -> new TicketException(HttpStatus.BAD_REQUEST, "not found ticket by ticket id")));
+    public TicketInfoDto searchTicketInfo(UUID ticketId, Long userId) {
+        Ticket ticket = ticketRepository.findByUuid(ticketId).orElseThrow(() -> new TicketException(HttpStatus.BAD_REQUEST, "not found ticket by ticket id"));
+        if (!ticket.getUserId().equals(userId)) throw new TicketException(HttpStatus.BAD_REQUEST, "not authorize");
+        return TicketInfoDto.of(ticket);
     }
 
     @Transactional
-    public TicketResponseDto cancelTicket(UUID ticketId) {
+    public TicketResponseDto cancelTicket(UUID ticketId, Long userId) {
         Ticket ticket = ticketRepository.findByUuidAndStatusNot(ticketId, TicketStatus.CANCELED).orElseThrow(() -> new TicketException(HttpStatus.BAD_REQUEST, "not found ticket or already canceled"));
+        if (!ticket.getUserId().equals(userId)) throw new TicketException(HttpStatus.BAD_REQUEST, "not authorize");
         ticket.cancel();
 
         seatClientService.requestRegisterTopic(TicketTopic.CANCEL_TICKET.getTopic(), ticket.getEventId()).subscribe();

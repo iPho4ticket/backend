@@ -308,7 +308,17 @@ jobs:
             SERVICE=payment-service
             VERSION=latest
 
+      - name: Check gateway task definition output
+        run: |
+          echo "gateway Task Definition: ${{ steps.gateway-task-def.outputs.task-definition }}"
 
+      - name: Check user task definition output
+        run: |
+          echo "user Task Definition: ${{ steps.user-task-def.outputs.task-definition }}"
+
+      - name: Check auth task definition output
+        run: |
+         echo "Auth Task Definition: ${{ steps.auth-task-def.outputs.task-definition }}"
 
 
       - name: Deploy gateway

@@ -37,6 +37,16 @@ jobs:
         run:
           ./gradlew clean build
 
+#      - name: Set up Docker Buildx
+#        uses: docker/setup-buildx-action@v3
+#
+#      - name: Cache Docker layers
+#        uses: actions/cache@v4
+#        with:
+#          path: /tmp/.buildx-cache
+#          key: ${{ runner.os }}-buildx-${{ github.sha }}
+#          restore-keys: ${{ runner.os }}-buildx-
+
         # gateway
       - name: Gateway image to Amazon ECR
         id: build-gateway-image
@@ -180,3 +190,190 @@ jobs:
             -t $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG" >> $GITHUB_ENV
+          
+          
+
+      - name: Download task definition for Gateway
+        run: |
+          aws ecs describe-task-definition --task-definition ipho-task-gateway \
+          --query taskDefinition > /tmp/ipho-task-gateway.json
+
+      - name: Download task definition for User
+        run: |
+          aws ecs describe-task-definition --task-definition ipho-task-user \
+          --query taskDefinition > /tmp/ipho-task-user.json
+
+      - name: Download task definition for Auth
+        run: |
+          aws ecs describe-task-definition --task-definition ipho-task-auth \
+          --query taskDefinition > /tmp/ipho-task-auth.json
+
+      - name: Download task definition for Event
+        run: |
+          aws ecs describe-task-definition --task-definition ipho-task-event \
+          --query taskDefinition > /tmp/ipho-task-event.json
+
+      - name: Download task definition for Seat
+        run: |
+          aws ecs describe-task-definition --task-definition ipho-task-seat \
+          --query taskDefinition > /tmp/ipho-task-seat.json
+
+      - name: Download task definition for Ticket
+        run: |
+          aws ecs describe-task-definition --task-definition ipho-task-ticket \
+          --query taskDefinition > /tmp/ipho-task-ticket.json
+
+      - name: Download task definition for Payment
+        run: |
+          aws ecs describe-task-definition --task-definition ipho-task-payment \
+          --query taskDefinition > /tmp/ipho-task-payment.json
+          
+          
+          
+
+      - name: gateway-task-def update
+        id: gateway-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: /tmp/ipho-task-gateway.json
+          container-name: gateway-container
+          image: ${{ steps.login_ecr.outputs.registry }}/ipho-repository/gateway:latest
+          docker-labels: |
+            SERVICE=gateway-service
+            VERSION=latest
+
+      - name: user-task-def update
+        id: user-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: /tmp/ipho-task-user.json
+          container-name: user-container
+          image: ${{ steps.login_ecr.outputs.registry }}/ipho-repository/user:latest
+          docker-labels: |
+            SERVICE=user-service
+            VERSION=latest
+
+      - name: auth-task-def update
+        id: auth-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: /tmp/ipho-task-auth.json
+          container-name: auth-container
+          image: ${{ steps.login_ecr.outputs.registry }}/ipho-repository/auth:latest
+          docker-labels: |
+            SERVICE=auth-service
+            VERSION=latest
+
+      - name: event-task-def update
+        id: event-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: /tmp/ipho-task-event.json
+          container-name: event-container
+          image: ${{ steps.login_ecr.outputs.registry }}/ipho-repository/event:latest
+          docker-labels: |
+            SERVICE=event-service
+            VERSION=latest
+
+      - name: seat-task-def update
+        id: seat-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: /tmp/ipho-task-seat.json
+          container-name: seat-container
+          image: ${{ steps.login_ecr.outputs.registry }}/ipho-repository/seat:latest
+          docker-labels: |
+            SERVICE=seat-service
+            VERSION=latest
+
+      - name: ticket-task-def update
+        id: ticket-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: /tmp/ipho-task-ticket.json
+          container-name: ticket-container
+          image: ${{ steps.login_ecr.outputs.registry }}/ipho-repository/ticket:latest
+          docker-labels: |
+            SERVICE=ticket-service
+            VERSION=latest
+
+      - name: payment-task-def update
+        id: payment-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: /tmp/ipho-task-payment.json
+          container-name: payment-container
+          image: ${{ steps.login_ecr.outputs.registry }}/ipho-repository/payment:latest
+          docker-labels: |
+            SERVICE=payment-service
+            VERSION=latest
+
+      - name: Deploy gateway
+        id: deploy-gateway
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def-workers.outputs.task-definition }}
+          cluster: ipho-cluster
+          service: gateway-service
+          wait-for-service-stability: true
+          wait-for-minutes: 10
+
+      - name: Deploy user
+        id: deploy-user
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def-workers.outputs.task-definition }}
+          cluster: ipho-cluster
+          service: user-service
+          wait-for-service-stability: true
+          wait-for-minutes: 10
+
+      - name: Deploy auth
+        id: deploy-auth
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def-workers.outputs.task-definition }}
+          cluster: ipho-cluster
+          service: auth-service
+          wait-for-service-stability: true
+          wait-for-minutes: 10
+
+      - name: Deploy event
+        id: deploy-event
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def-workers.outputs.task-definition }}
+          cluster: ipho-cluster
+          service: event-service
+          wait-for-service-stability: true
+          wait-for-minutes: 10
+
+      - name: Deploy seat
+        id: deploy-seat
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def-workers.outputs.task-definition }}
+          cluster: ipho-cluster
+          service: seat-service
+          wait-for-service-stability: true
+          wait-for-minutes: 10
+
+      - name: Deploy ticket
+        id: deploy-ticket
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def-workers.outputs.task-definition }}
+          cluster: ipho-cluster
+          service: ticket-service
+          wait-for-service-stability: true
+          wait-for-minutes: 10
+
+      - name: Deploy payment
+        id: deploy-payment
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def-workers.outputs.task-definition }}
+          cluster: ipho-cluster
+          service: payment-service
+          wait-for-service-stability: true
+          wait-for-minutes: 10

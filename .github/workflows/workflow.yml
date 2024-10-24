@@ -259,7 +259,7 @@ jobs:
         with:
           task-definition: /tmp/ipho-task-auth.json
           container-name: auth-container
-          image: ${{ steps.login_ecr.outputs.registry }}/ipho-repository/auth:latest
+          image: ${{ steps.login-ecr.outputs.registry }}/ipho-repository/auth:latest
           docker-labels: |
             SERVICE=auth-service
             VERSION=latest
@@ -270,7 +270,7 @@ jobs:
         with:
           task-definition: /tmp/ipho-task-event.json
           container-name: event-container
-          image: ${{ steps.login_ecr.outputs.registry }}/ipho-repository/event:latest
+          image: ${{ steps.login-ecr.outputs.registry }}/ipho-repository/event:latest
           docker-labels: |
             SERVICE=event-service
             VERSION=latest
@@ -281,7 +281,7 @@ jobs:
         with:
           task-definition: /tmp/ipho-task-seat.json
           container-name: seat-container
-          image: ${{ steps.login_ecr.outputs.registry }}/ipho-repository/seat:latest
+          image: ${{ steps.login-ecr.outputs.registry }}/ipho-repository/seat:latest
           docker-labels: |
             SERVICE=seat-service
             VERSION=latest
@@ -292,7 +292,7 @@ jobs:
         with:
           task-definition: /tmp/ipho-task-ticket.json
           container-name: ticket-container
-          image: ${{ steps.login_ecr.outputs.registry }}/ipho-repository/ticket:latest
+          image: ${{ steps.login-ecr.outputs.registry }}/ipho-repository/ticket:latest
           docker-labels: |
             SERVICE=ticket-service
             VERSION=latest
@@ -303,7 +303,7 @@ jobs:
         with:
           task-definition: /tmp/ipho-task-payment.json
           container-name: payment-container
-          image: ${{ steps.login_ecr.outputs.registry }}/ipho-repository/payment:latest
+          image: ${{ steps.login-ecr.outputs.registry }}/ipho-repository/payment:latest
           docker-labels: |
             SERVICE=payment-service
             VERSION=latest

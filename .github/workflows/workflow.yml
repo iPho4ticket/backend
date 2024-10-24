@@ -228,8 +228,8 @@ jobs:
           aws ecs describe-task-definition --task-definition ipho-task-payment \
           --query taskDefinition > /tmp/ipho-task-payment.json
           
-          
-          
+      - name: Check files
+        run: ls -l /tmp
 
       - name: gateway-task-def update
         id: gateway-task-def

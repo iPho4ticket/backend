@@ -23,6 +23,7 @@ public class TicketController {
     @PostMapping
     public ResponseEntity<?> reservationTicket(@RequestBody TicketRequestDto ticketRequestDto) {
         Long userId = SecurityUtil.getUserId();
+        System.out.println("userId = " + userId);
         return ResponseEntity.ok(ticketService.reservationTicket(ticketRequestDto, userId));
     }
 

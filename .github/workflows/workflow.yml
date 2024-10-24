@@ -315,21 +315,8 @@ jobs:
           docker-labels: |
             SERVICE=payment-service
             VERSION=latest
-
-      - name: Check gateway task definition output
-        run: |
-          echo "gateway Task Definition: ${{ steps.gateway-task-def.outputs.task-definition }}"
-
-      - name: Check user task definition output
-        run: |
-          echo "user Task Definition: ${{ steps.user-task-def.outputs.task-definition }}"
-
-      - name: Check auth task definition output
-        run: |
-         echo "Auth Task Definition: ${{ steps.auth-task-def.outputs.task-definition }}"
-
-
-
+            
+            
 
       - name: Deploy user
         id: deploy-user
@@ -399,4 +386,4 @@ jobs:
           task-definition: ${{ steps.gateway-task-def.outputs.task-definition }}
           service: gateway-service
           wait-for-service-stability: true
-          wait-for-minutes: 10
+          wait-for-minutes: 15

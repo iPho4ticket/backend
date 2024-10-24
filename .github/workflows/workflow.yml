@@ -312,8 +312,8 @@ jobs:
         id: deploy-gateway
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ${{ steps.task-def-workers.outputs.task-definition }}
           cluster: ipho-cluster
+          task-definition: ipho-task-gateway
           service: gateway-service
           wait-for-service-stability: true
           wait-for-minutes: 10
@@ -322,7 +322,7 @@ jobs:
         id: deploy-user
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ${{ steps.task-def-workers.outputs.task-definition }}
+          task-definition: ipho-task-user
           cluster: ipho-cluster
           service: user-service
           wait-for-service-stability: true
@@ -332,7 +332,7 @@ jobs:
         id: deploy-auth
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ${{ steps.task-def-workers.outputs.task-definition }}
+          task-definition: ipho-task-auth
           cluster: ipho-cluster
           service: auth-service
           wait-for-service-stability: true
@@ -342,7 +342,7 @@ jobs:
         id: deploy-event
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ${{ steps.task-def-workers.outputs.task-definition }}
+          task-definition: ipho-task-event
           cluster: ipho-cluster
           service: event-service
           wait-for-service-stability: true
@@ -352,7 +352,7 @@ jobs:
         id: deploy-seat
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ${{ steps.task-def-workers.outputs.task-definition }}
+          task-definition: ipho-task-seat
           cluster: ipho-cluster
           service: seat-service
           wait-for-service-stability: true
@@ -362,7 +362,7 @@ jobs:
         id: deploy-ticket
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ${{ steps.task-def-workers.outputs.task-definition }}
+          task-definition: ipho-task-ticket
           cluster: ipho-cluster
           service: ticket-service
           wait-for-service-stability: true
@@ -372,7 +372,7 @@ jobs:
         id: deploy-payment
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ${{ steps.task-def-workers.outputs.task-definition }}
+          task-definition: ipho-task-payment
           cluster: ipho-cluster
           service: payment-service
           wait-for-service-stability: true

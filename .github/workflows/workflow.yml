@@ -321,13 +321,13 @@ jobs:
          echo "Auth Task Definition: ${{ steps.auth-task-def.outputs.task-definition }}"
 
 
-      - name: Deploy gateway
-        id: deploy-gateway
+      - name: Deploy auth
+        id: deploy-auth
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
+          task-definition: ${{ steps.auth-task-def.outputs.task-definition }}
           cluster: ipho-cluster
-          task-definition: ${{ steps.gateway-task-def.outputs.task-definition }}
-          service: gateway-service
+          service: auth-service
           wait-for-service-stability: true
           wait-for-minutes: 10
 
@@ -338,16 +338,6 @@ jobs:
           task-definition: ${{ steps.user-task-def.outputs.task-definition }}
           cluster: ipho-cluster
           service: user-service
-          wait-for-service-stability: true
-          wait-for-minutes: 10
-
-      - name: Deploy auth
-        id: deploy-auth
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-        with:
-          task-definition: ${{ steps.auth-task-def.outputs.task-definition }}
-          cluster: ipho-cluster
-          service: auth-service
           wait-for-service-stability: true
           wait-for-minutes: 10
 
@@ -388,5 +378,15 @@ jobs:
           task-definition: ${{ steps.payment-task-def.outputs.task-definition }}
           cluster: ipho-cluster
           service: payment-service
+          wait-for-service-stability: true
+          wait-for-minutes: 10
+
+      - name: Deploy gateway
+        id: deploy-gateway
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          cluster: ipho-cluster
+          task-definition: ${{ steps.gateway-task-def.outputs.task-definition }}
+          service: gateway-service
           wait-for-service-stability: true
           wait-for-minutes: 10

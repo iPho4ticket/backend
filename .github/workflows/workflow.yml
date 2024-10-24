@@ -313,7 +313,7 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           cluster: ipho-cluster
-          task-definition: ipho-task-gateway
+          task-definition: ${{ steps.gateway-task-def.outputs.task-definition }}
           service: gateway-service
           wait-for-service-stability: true
           wait-for-minutes: 10
@@ -322,7 +322,7 @@ jobs:
         id: deploy-user
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ipho-task-user
+          task-definition: ${{ steps.user-task-def.outputs.task-definition }}
           cluster: ipho-cluster
           service: user-service
           wait-for-service-stability: true

@@ -3,6 +3,14 @@ name: Staging
 on:
   push:
     branches: [ecrtest]
+    paths:
+      - 'gateway-service/**'
+      - 'auth-service/**'
+      - 'event-service/**'
+      - 'payment-service/**'
+      - 'seat-service/**'
+      - 'ticket-service/**'
+      - 'user-service/**'
 jobs:
   staging:
     name: deploy to stating

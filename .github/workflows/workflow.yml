@@ -237,7 +237,7 @@ jobs:
         with:
           task-definition: /tmp/ipho-task-gateway.json
           container-name: gateway-container
-          image: ${{ steps.login_ecr.outputs.registry }}/ipho-repository/gateway:latest
+          image: ${{ steps.login-ecr.outputs.registry }}/ipho-repository/gateway:latest
           docker-labels: |
             SERVICE=gateway-service
             VERSION=latest
@@ -248,7 +248,7 @@ jobs:
         with:
           task-definition: /tmp/ipho-task-user.json
           container-name: user-container
-          image: ${{ steps.login_ecr.outputs.registry }}/ipho-repository/user:latest
+          image: ${{ steps.login-ecr.outputs.registry }}/ipho-repository/user:latest
           docker-labels: |
             SERVICE=user-service
             VERSION=latest

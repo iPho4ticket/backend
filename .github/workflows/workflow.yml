@@ -308,6 +308,9 @@ jobs:
             SERVICE=payment-service
             VERSION=latest
 
+
+
+
       - name: Deploy gateway
         id: deploy-gateway
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
@@ -332,7 +335,7 @@ jobs:
         id: deploy-auth
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ipho-task-auth
+          task-definition: ${{ steps.auth-task-def.outputs.task-definition }}
           cluster: ipho-cluster
           service: auth-service
           wait-for-service-stability: true
@@ -342,7 +345,7 @@ jobs:
         id: deploy-event
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ipho-task-event
+          task-definition: ${{ steps.event-task-def.outputs.task-definition }}
           cluster: ipho-cluster
           service: event-service
           wait-for-service-stability: true
@@ -352,7 +355,7 @@ jobs:
         id: deploy-seat
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ipho-task-seat
+          task-definition: ${{ steps.seat-task-def.outputs.task-definition }}
           cluster: ipho-cluster
           service: seat-service
           wait-for-service-stability: true
@@ -362,7 +365,7 @@ jobs:
         id: deploy-ticket
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ipho-task-ticket
+          task-definition: ${{ steps.ticket-task-def.outputs.task-definition }}
           cluster: ipho-cluster
           service: ticket-service
           wait-for-service-stability: true
@@ -372,7 +375,7 @@ jobs:
         id: deploy-payment
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ipho-task-payment
+          task-definition: ${{ steps.payment-task-def.outputs.task-definition }}
           cluster: ipho-cluster
           service: payment-service
           wait-for-service-stability: true
